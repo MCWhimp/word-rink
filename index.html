@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Word Pitch — ISEE Vocab Training</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0B3D2E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Word Pitch">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ice:#EEF7F0;--ice2:#FFFFFF;--ink:#0B3D2E;--ink2:#466B5A;--blue:#1E8449;--red:#D7263D;--gold:#E9A826;--green:#1F9E6B;--line:#C5DCCD;
+  color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ice:#071F15;--ice2:#0F2E22;--ink:#E8F5EC;--ink2:#9FC4AF;--blue:#3FBF72;--red:#F0506A;--gold:#F2B33D;--green:#3CC489;--line:#1F4A38;color-scheme:dark}}
+:root[data-theme="dark"]{--ice:#071F15;--ice2:#0F2E22;--ink:#E8F5EC;--ink2:#9FC4AF;--blue:#3FBF72;--red:#F0506A;--gold:#F2B33D;--green:#3CC489;--line:#1F4A38;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--ice);color:var(--ink);font-family:"Barlow",system-ui,-apple-system,sans-serif;font-size:17px;line-height:1.45;display:flex;flex-direction:column}
+.disp{font-family:"Barlow Condensed","Barlow",system-ui,sans-serif;font-weight:800;letter-spacing:.01em}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+input,select{font:inherit;color:var(--ink);background:var(--ice2);border:2px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+
+/* scoreboard */
+.board{background:var(--ink);color:#fff;padding:12px 14px 10px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+:root[data-theme="dark"] .board{background:#04150E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .board{background:#04150E}}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--ink)}
+.cell{text-align:center}
+.cell .n{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:34px;line-height:1;color:var(--gold);font-variant-numeric:tabular-nums}
+.cell .n.red{color:#FF5C70}.cell .n.white{color:#fff}
+.cell .l{font-size:12px;opacity:.75;margin-top:2px}
+
+main{flex:1;max-width:620px;width:100%;margin:0 auto;padding:16px 16px 90px}
+h1,h2,h3{font-family:"Barlow Condensed",sans-serif;font-weight:800;line-height:1.05;margin:0}
+h1{font-size:40px}h2{font-size:28px}h3{font-size:22px}
+p{margin:.4em 0}
+.muted{color:var(--ink2)}
+.rink{border-top:4px solid var(--red);padding-top:12px;margin-top:22px}
+.blueline{border-top:3px solid var(--blue);padding-top:10px;margin-top:16px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--blue);color:#fff;border-radius:10px;padding:14px 18px;font-weight:600;font-size:18px;width:100%}
+.btn.red{background:var(--red)}.btn.gold{background:var(--gold);color:#1a1200}.btn.ghost{background:transparent;border:2px solid var(--line);color:var(--ink)}
+.btn.sm{width:auto;padding:8px 14px;font-size:15px}
+.btn:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+
+/* tabs */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--ice2);border-top:2px solid var(--line);display:flex;z-index:5;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs button{flex:1;padding:12px 4px 10px;font-size:13px;color:var(--ink2);display:flex;flex-direction:column;align-items:center;gap:2px}
+nav.tabs button .ic{font-size:20px}
+nav.tabs button.on{color:var(--blue);font-weight:600}
+
+/* cards */
+.wcard{background:var(--ice2);border:2px solid var(--line);border-radius:14px;padding:18px}
+.word{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:44px;line-height:1}
+.pos{color:var(--ink2);font-style:italic;margin-left:6px;font-size:16px}
+.sent{margin-top:14px;font-size:19px}
+.sent b{color:var(--blue)}
+.zh{color:var(--ink2)}
+.opts{display:grid;gap:10px;margin-top:14px}
+.opt{text-align:left;background:var(--ice2);border:2px solid var(--line);border-radius:10px;padding:14px;font-size:18px;display:flex;gap:10px;align-items:center}
+.opt .k{font-family:"Barlow Condensed",sans-serif;font-weight:800;color:var(--ink2);width:22px}
+.opt.ok{border-color:var(--green);background:color-mix(in srgb,var(--green) 14%,var(--ice2))}
+.opt.bad{border-color:var(--red);background:color-mix(in srgb,var(--red) 12%,var(--ice2))}
+.opt:disabled{cursor:default}
+.prog{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:6px 0 14px}
+.prog i{display:block;height:100%;background:var(--blue);transition:width .25s}
+.fb{margin-top:12px;padding:12px;border-radius:10px;background:var(--ice2);border-left:5px solid var(--green)}
+.fb.bad{border-left-color:var(--red)}
+.xp-pop{position:fixed;left:50%;top:40%;transform:translateX(-50%);font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:46px;color:var(--gold);pointer-events:none;animation:pop .9s ease-out forwards;z-index:20;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,10px)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-50px)}}
+@media (prefers-reduced-motion:reduce){.xp-pop{animation:none;opacity:0}.prog i{transition:none}}
+
+.stat{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}
+.stat .v{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:24px}
+.boxes{display:flex;gap:4px;align-items:flex-end;height:70px;margin:10px 0}
+.boxes div{flex:1;background:var(--blue);border-radius:4px 4px 0 0;min-height:3px;position:relative}
+.boxes div span{position:absolute;top:-20px;left:0;right:0;text-align:center;font-size:12px;color:var(--ink2)}
+.boxes div.m{background:var(--green)}
+.blab{display:flex;gap:4px;font-size:11px;color:var(--ink2)}.blab span{flex:1;text-align:center}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:8px}
+.badge{border:2px solid var(--line);border-radius:10px;padding:10px;font-size:14px}
+.badge.got{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 14%,var(--ice2))}
+.badge .e{font-size:22px}
+.wl{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);text-align:left;width:100%}
+.pill{font-size:12px;padding:2px 8px;border-radius:99px;border:1.5px solid var(--line);color:var(--ink2);white-space:nowrap}
+.pill.b4,.pill.b5{border-color:var(--green);color:var(--green)}.pill.due{border-color:var(--red);color:var(--red)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.chip{border:2px solid var(--line);border-radius:99px;padding:6px 12px;font-size:14px}.chip.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.phase{display:grid;grid-template-columns:70px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.phase .w{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:20px;color:var(--blue)}
+.phase.now .w{color:var(--red)}
+.lvl{display:flex;align-items:center;gap:12px}
+.lvl .ring{width:64px;height:64px;border-radius:50%;background:conic-gradient(var(--gold) var(--p),var(--line) 0);display:grid;place-items:center}
+.lvl .ring i{width:50px;height:50px;border-radius:50%;background:var(--ice2);display:grid;place-items:center;font-style:normal;font-size:26px}
+.modal{position:fixed;inset:0;background:rgba(5,15,30,.6);display:grid;place-items:center;z-index:30;padding:20px}
+.modal>div{background:var(--ice2);border-radius:14px;padding:22px;max-width:420px;width:100%}
+.hidden{display:none}
+.kb{font-size:13px;color:var(--ink2);margin-top:6px}
+.timer{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:40px;color:var(--red)}
+label.f{display:block;margin:12px 0 4px;font-weight:600;font-size:15px}
+.tog{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.sw{width:48px;height:28px;border-radius:14px;background:var(--line);position:relative}.sw.on{background:var(--green)}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .15s}.sw.on::after{left:23px}
+.note{font-size:14px;color:var(--ink2);border:1.5px dashed var(--line);border-radius:10px;padding:10px;margin-top:10px}
+</style>
+</head>
+<body>
+<header class="board" aria-label="Scoreboard">
+  <div class="cell"><div class="n" id="sbStreak">0</div><div class="l">day streak</div></div>
+  <div class="cell"><div class="n white" id="sbXP">0</div><div class="l">XP</div></div>
+  <div class="cell"><div class="n red" id="sbDue">0</div><div class="l">due today</div></div>
+  <div class="cell"><div class="n white" id="sbDays">—</div><div class="l">days to exam</div></div>
+</header>
+<main id="main"></main>
+<nav class="tabs" aria-label="Sections">
+  <button data-t="today" class="on"><span class="ic">⚽</span>Today</button>
+  <button data-t="words"><span class="ic">📖</span>Words</button>
+  <button data-t="plan"><span class="ic">📅</span>Plan</button>
+  <button data-t="stats"><span class="ic">🏆</span>Stats</button>
+  <button data-t="settings"><span class="ic">⚙️</span>Setup</button>
+</nav>
+<div id="modal" class="modal hidden"></div>
+<script>
+const MID = [
+["abandon","v","to leave behind or give up","放棄；遺棄",["desert","leave","quit"],"The team refused to ___ their game plan even when they fell behind."],
+["abrupt","adj","sudden and unexpected","突然的",["sudden","hasty","unexpected"],"The ___ stop left his skates spraying ice everywhere."],
+["absurd","adj","ridiculous; making no sense","荒謬的",["ridiculous","silly","foolish"],"It was ___ to play goalie without a mask."],
+["accurate","adj","exactly correct","準確的",["exact","correct","precise"],"Her ___ passes hit the stick blade every time."],
+["achieve","v","to succeed in reaching a goal","達成",["accomplish","reach","attain"],"He trained all summer to ___ a spot on the team."],
+["adapt","v","to adjust to new conditions","適應",["adjust","change","modify"],"Players had to ___ quickly to the bigger rink."],
+["adequate","adj","good enough","足夠的",["sufficient","enough","acceptable"],"Two hours of practice was ___ to learn the new play."],
+["admire","v","to respect and look up to","欽佩",["respect","look up to","praise"],"Rookies ___ the captain for her calm under pressure."],
+["alert","adj","watchful and ready","警覺的",["watchful","attentive","aware"],"Stay ___ — the puck can bounce off the boards at any time."],
+["ally","n","a friend or partner who helps","盟友",["partner","friend","supporter"],"In the game, your ___ heals you when your health is low."],
+["ancient","adj","very old","古老的",["old","antique","aged"],"The ___ temple level is full of hidden traps."],
+["anticipate","v","to expect something before it happens","預期",["expect","foresee","predict"],"A smart goalie learns to ___ where the shot is going."],
+["anxious","adj","worried and nervous","焦慮的",["nervous","worried","uneasy"],"He felt ___ before the tryout."],
+["apparent","adj","clearly seen or understood","明顯的",["obvious","clear","evident"],"It was ___ from the first shift that the ice was too soft."],
+["appropriate","adj","suitable for the situation","合適的",["suitable","proper","fitting"],"Sneakers are not ___ footwear for the rink."],
+["ascend","v","to go up","上升",["climb","rise","go up"],"The hero must ___ the tower to reach the final boss."],
+["assist","v","to help","協助",["help","aid","support"],"A good center will ___ on more goals than he scores."],
+["authentic","adj","real; genuine","真實的",["genuine","real","true"],"The jersey came with proof that it was ___, signed by the star."],
+["baffle","v","to confuse completely","使困惑",["confuse","puzzle","bewilder"],"The puzzle on level four seemed to ___ everyone."],
+["barren","adj","empty; unable to produce","荒蕪的",["empty","bare","lifeless"],"The ___ desert map has no cover and no loot."],
+["beneficial","adj","helpful; producing good results","有益的",["helpful","useful","valuable"],"Stretching before the game is ___ for your muscles."],
+["bizarre","adj","very strange","怪異的",["strange","weird","odd"],"The goalie's ___ pre-game dance made everyone laugh."],
+["boast","v","to brag","吹噓",["brag","show off","crow"],"He liked to ___ about his high score to everyone."],
+["brittle","adj","easily broken","易碎的",["fragile","breakable","delicate"],"The old stick was so ___ that it snapped on the first slap shot."],
+["burden","n","a heavy load or responsibility","負擔",["load","weight","responsibility"],"Being captain can feel like a ___ when the team is losing."],
+["capable","adj","having the ability to do something","有能力的",["able","competent","skilled"],"She is ___ of playing any position on the ice."],
+["casual","adj","relaxed; not serious","隨意的",["relaxed","informal","easygoing"],"It was a ___ pickup game, so nobody kept score."],
+["cautious","adj","careful to avoid danger","謹慎的",["careful","wary","watchful"],"Be ___ when the ice near the boards gets chewed up."],
+["cease","v","to stop","停止",["stop","end","halt"],"The music will ___ the moment the puck drops."],
+["cherish","v","to value highly and care for","珍惜",["treasure","value","prize"],"He will ___ the puck from his first goal forever."],
+["coarse","adj","rough; not smooth","粗糙的",["rough","harsh","crude"],"The ___ ice slowed the puck down."],
+["collapse","v","to fall down suddenly","倒塌；崩潰",["fall","crumble","give way"],"The defense seemed to ___ in the final minute."],
+["collide","v","to crash into","相撞",["crash","bump","smash"],"Two players managed to ___ going for the same loose ball."],
+["commence","v","to begin","開始",["begin","start","open"],"The tournament will ___ at nine o'clock."],
+["compassion","n","sympathy and concern for others","同情心",["sympathy","kindness","care"],"She showed ___ by helping the injured opponent up."],
+["competent","adj","able to do something well","能幹的",["capable","skilled","able"],"A ___ referee keeps the game under control."],
+["conceal","v","to hide","隱藏",["hide","cover","mask"],"The thief in the game can ___ himself in shadows."],
+["confident","adj","sure of oneself","自信的",["sure","certain","self-assured"],"He looked ___ stepping up for the penalty shot."],
+["conflict","n","a serious disagreement or fight","衝突",["clash","struggle","dispute"],"The ___ between the two rivals boiled over in the third period."],
+["conquer","v","to defeat or overcome","征服",["defeat","overcome","beat"],"To ___ the ice world, you need the fire sword."],
+["considerable","adj","large in amount","相當大的",["significant","large","substantial"],"The new rink cost a ___ amount of money."],
+["consistent","adj","staying the same; reliable","穩定一致的",["steady","regular","reliable"],"Her ___ effort every practice earned her more ice time."],
+["contribute","v","to give or add to","貢獻",["give","add","donate"],"Every player should ___ something, even from the bench."],
+["convince","v","to make someone believe","說服",["persuade","sway","win over"],"It took weeks to ___ the coach to try the new play."],
+["cooperate","v","to work together","合作",["collaborate","work together","team up"],"The two forwards must ___ to break the trap."],
+["courteous","adj","polite and respectful","有禮貌的",["polite","respectful","civil"],"It is ___ to tap sticks after the game."],
+["crucial","adj","extremely important","關鍵的",["vital","critical","essential"],"The faceoff was ___ with ten seconds left."],
+["dedicate","v","to devote time and effort to","奉獻",["devote","commit","give"],"He chose to ___ his summer to improving his shot."],
+["delicate","adj","easily damaged; needing care","精細的；脆弱的",["fragile","fine","dainty"],"The ___ model of the stadium broke in the backpack."],
+["demolish","v","to destroy completely","摧毀",["destroy","wreck","tear down"],"The city plans to ___ the old arena."],
+["dense","adj","thick; crowded","稠密的",["thick","crowded","packed"],"The ___ crowd around the net made it hard to see the puck."],
+["descend","v","to go down","下降",["drop","go down","sink"],"Players ___ the stairs to the locker room after the game."],
+["despair","n","complete loss of hope","絕望",["hopelessness","misery","gloom"],"Fans were in ___ after the fourth straight loss."],
+["devour","v","to eat greedily","狼吞虎嚥",["gobble","consume","eat up"],"The hungry team will ___ the pizza in minutes."],
+["dignity","n","self-respect; being worthy of honor","尊嚴",["pride","self-respect","honor"],"She accepted the loss with ___."],
+["disaster","n","a terrible event","災難",["catastrophe","calamity","tragedy"],"The first period was a ___: three goals against."],
+["discard","v","to throw away","丟棄",["throw away","dump","get rid of"],"Players ___ broken sticks in the bin by the bench."],
+["dismiss","v","to send away; to reject","解散；駁回",["reject","send away","drop"],"The coach chose to ___ the rumor about the trade."],
+["distinct","adj","clearly different; noticeable","明顯不同的",["different","separate","clear"],"Each character class has a ___ set of skills."],
+["distract","v","to take attention away","使分心",["divert","sidetrack","disturb"],"Fans wave towels to ___ the shooter."],
+["dominate","v","to control; to be the strongest","支配；主導",["control","rule","command"],"The home team managed to ___ the second period."],
+["drastic","adj","extreme; severe","劇烈的",["extreme","severe","radical"],"Pulling the goalie with five minutes left was a ___ move."],
+["durable","adj","lasting a long time; tough","耐用的",["sturdy","tough","long-lasting"],"Composite sticks are more ___ than wooden ones."],
+["eager","adj","very keen and excited","渴望的",["keen","enthusiastic","excited"],"The rookie was ___ to take his first shift."],
+["earnest","adj","sincere and serious","認真誠懇的",["sincere","serious","heartfelt"],"His ___ apology to the team was accepted."],
+["efficient","adj","working well without waste","有效率的",["effective","productive","economical"],"An ___ skater uses fewer strides to cover more ice."],
+["eliminate","v","to remove or get rid of","淘汰；消除",["remove","get rid of","cut"],"One more loss would ___ them from the playoffs."],
+["emerge","v","to come out or appear","出現",["appear","surface","come out"],"A new star began to ___ in the second half of the season."],
+["endure","v","to suffer patiently; to last","忍受；持續",["bear","withstand","tolerate"],"Players must ___ freezing early-morning practices."],
+["enormous","adj","very large","巨大的",["huge","massive","gigantic"],"The ___ center blocked the whole lane."],
+["essential","adj","absolutely necessary","必要的",["necessary","vital","crucial"],"A mouthguard is ___ equipment."],
+["evident","adj","clear and obvious","明顯的",["obvious","clear","plain"],"It was ___ that the rookie had practiced his wrist shot."],
+["exaggerate","v","to make something seem bigger than it is","誇大",["overstate","inflate","magnify"],"He tends to ___ how far his longest shot was."],
+["exceed","v","to go beyond","超過",["surpass","top","outdo"],"Her goal total this year will ___ last year's."],
+["exhaust","v","to tire out completely","使筋疲力盡",["tire out","drain","wear out"],"Overtime will ___ even the fittest players."],
+["expand","v","to make larger","擴大",["enlarge","grow","widen"],"The league plans to ___ to twelve teams."],
+["extraordinary","adj","very unusual or remarkable","非凡的",["remarkable","amazing","exceptional"],"It was an ___ save, glove hand across the crease."],
+["fatigue","n","extreme tiredness","疲勞",["tiredness","exhaustion","weariness"],"___ caused the sloppy passes late in the game."],
+["feeble","adj","weak","虛弱的",["weak","frail","faint"],"His ___ shot barely reached the goalie."],
+["ferocious","adj","fierce and violent","兇猛的",["fierce","savage","brutal"],"The ___ dragon guards the last level."],
+["flaw","n","a mistake or weakness","缺點",["defect","fault","weakness"],"The one ___ in his game is skating backward."],
+["flexible","adj","able to bend or change easily","靈活的",["bendable","adaptable","supple"],"A ___ schedule lets him practice after school."],
+["fragile","adj","easily broken","脆弱的",["delicate","breakable","frail"],"The team's lead felt ___ with two minutes left."],
+["frantic","adj","wildly excited or anxious","狂亂的",["frenzied","desperate","panicky"],"The ___ final minute had both benches on their feet."],
+["frequent","adj","happening often","頻繁的",["common","regular","repeated"],"Line changes are ___ in hockey, about every 45 seconds."],
+["generous","adj","willing to give freely","慷慨的",["giving","kind","unselfish"],"The ___ coach bought the whole team ice cream."],
+["genuine","adj","real; sincere","真正的",["real","authentic","sincere"],"Her smile after the win was ___."],
+["gigantic","adj","extremely large","龐大的",["huge","enormous","massive"],"The ___ scoreboard hangs over center ice."],
+["gloomy","adj","dark or sad","陰沉的",["dark","dreary","sad"],"The locker room was ___ after the loss."],
+["grateful","adj","thankful","感激的",["thankful","appreciative","obliged"],"He was ___ to his parents for the early-morning rides to the rink."],
+["grim","adj","serious and gloomy","嚴峻的",["serious","harsh","stern"],"The coach's face was ___ as the other team scored again."],
+["grueling","adj","extremely tiring and demanding","艱苦的",["exhausting","punishing","tough"],"The ___ tryout lasted four hours."],
+["harsh","adj","rough; severe; unkind","嚴厲的",["severe","rough","cruel"],"The ___ penalty seemed unfair to the home fans."],
+["hasty","adj","done too quickly","匆忙的",["rushed","hurried","quick"],"A ___ pass went straight to the other team."],
+["hesitate","v","to pause before acting","猶豫",["pause","waver","delay"],"Don't ___ — shoot when you see the opening."],
+["hilarious","adj","extremely funny","極好笑的",["funny","comical","amusing"],"The mascot's fall on the ice was ___."],
+["hoist","v","to lift up","舉起",["lift","raise","heave"],"The captain got to ___ the trophy first."],
+["hostile","adj","unfriendly; like an enemy","敵對的",["unfriendly","aggressive","antagonistic"],"The ___ crowd booed every time he touched the puck."],
+["humble","adj","modest; not proud","謙虛的",["modest","meek","unassuming"],"Despite the hat trick, he stayed ___ in the interview."],
+["humiliate","v","to make someone feel ashamed","羞辱",["embarrass","shame","disgrace"],"Losing 10–0 seemed to ___ the whole team."],
+["idle","adj","not active; doing nothing","閒置的",["inactive","lazy","unused"],"The ___ Zamboni sat in the corner all afternoon."],
+["ignorant","adj","lacking knowledge","無知的",["uninformed","unaware","clueless"],"He was ___ of the icing rule until the ref explained it."],
+["immense","adj","extremely large","巨大的",["huge","vast","enormous"],"The ___ arena holds twenty thousand fans."],
+["impatient","adj","not willing to wait","不耐煩的",["restless","eager","hasty"],"The ___ player kept jumping over the boards too early."],
+["imply","v","to suggest without saying directly","暗示",["suggest","hint","indicate"],"The coach's silence seemed to ___ he was unhappy."],
+["inferior","adj","lower in quality or rank","較差的",["worse","lesser","second-rate"],"The ___ skates made it hard to turn."],
+["inquire","v","to ask about","詢問",["ask","question","investigate"],"She called to ___ about the tryout date."],
+["inspire","v","to fill someone with the urge to do something","激勵",["motivate","encourage","uplift"],"Her comeback story continues to ___ younger players."],
+["intense","adj","extreme; very strong","強烈的",["extreme","powerful","fierce"],"The ___ final period had three lead changes."],
+["investigate","v","to look into carefully","調查",["examine","explore","probe"],"The league will ___ the hit from behind."],
+["isolate","v","to set apart from others","隔離",["separate","cut off","detach"],"The defense tried to ___ the star forward from his linemates."],
+["jeopardy","n","danger","危險",["danger","peril","risk"],"A second penalty would put the win in ___."],
+["legitimate","adj","lawful; fair","合法的；正當的",["legal","valid","proper"],"The replay confirmed the goal was ___."],
+["loyal","adj","faithful to someone or something","忠誠的",["faithful","devoted","true"],"The ___ fans travel to every away game."],
+["lure","v","to tempt or attract","引誘",["tempt","attract","entice"],"The shiny chest is there to ___ players into a trap."],
+["luxury","n","something expensive and not necessary","奢侈品",["extravagance","indulgence","treat"],"A heated bench is a ___ most rinks don't have."],
+["massive","adj","very large and heavy","巨大的",["huge","enormous","hefty"],"The ___ defenseman cleared the crease with ease."],
+["mature","adj","fully grown; acting like an adult","成熟的",["grown-up","adult","developed"],"He handled the loss in a ___ way."],
+["mock","v","to make fun of","嘲笑",["tease","ridicule","taunt"],"Good teammates don't ___ a goalie after a bad game."],
+["modest","adj","humble; not large","謙虛的；適度的",["humble","unassuming","moderate"],"She was ___ about scoring the winning goal."],
+["monotonous","adj","boring because it never changes","單調的",["dull","repetitive","tedious"],"Skating laps for an hour is ___."],
+["motive","n","a reason for doing something","動機",["reason","purpose","motivation"],"His ___ for training so hard was making the TAS team."],
+["murky","adj","dark and unclear","昏暗模糊的",["dark","cloudy","gloomy"],"The ___ swamp level hides enemies underwater."],
+["negligent","adj","careless; failing to take proper care","疏忽的",["careless","neglectful","irresponsible"],"The ___ player left his helmet unstrapped."],
+["nimble","adj","quick and light in movement","敏捷的",["agile","quick","swift"],"The ___ guard slipped between two defenders."],
+["obedient","adj","willing to follow orders","服從的",["dutiful","compliant","well-behaved"],"The ___ dog in the game sits when you press the button."],
+["observe","v","to watch carefully","觀察",["watch","notice","study"],"Scouts ___ every shift from the stands."],
+["obvious","adj","easily seen or understood","明顯的",["clear","evident","plain"],"It was ___ who the best player on the ice was."],
+["optimistic","adj","hopeful about the future","樂觀的",["hopeful","positive","upbeat"],"The coach stayed ___ even at 0–3."],
+["ordeal","n","a very difficult experience","磨難",["trial","hardship","nightmare"],"The six-hour bus ride home after the loss was an ___."],
+["outrage","n","great anger at something unfair","憤慨",["anger","fury","indignation"],"The no-call caused ___ among the home fans."],
+["overwhelm","v","to overpower completely","壓倒",["overpower","crush","swamp"],"Three quick goals seemed to ___ the visiting team."],
+["peculiar","adj","strange or unusual","奇特的",["odd","strange","unusual"],"The goalie has a ___ habit of licking his glove."],
+["pessimistic","adj","expecting the worst","悲觀的",["gloomy","negative","hopeless"],"Fans were ___ about the season after the star's injury."],
+["plead","v","to beg","懇求",["beg","implore","appeal"],"He tried to ___ with the ref to look at the replay."],
+["ponder","v","to think carefully about","仔細思考",["consider","reflect","think over"],"The coach paused to ___ which goalie to start."],
+["portable","adj","easy to carry","便攜的",["movable","lightweight","handy"],"A ___ net lets you practice shots in the driveway."],
+["precise","adj","exact and accurate","精確的",["exact","accurate","specific"],"A ___ pass landed right on her tape."],
+["predict","v","to say what will happen","預測",["forecast","foresee","anticipate"],"Nobody could ___ the rookie would score twice."],
+["prominent","adj","important; standing out","顯著的；傑出的",["notable","famous","leading"],"The ___ coach has won five titles."],
+["prosper","v","to succeed and do well","繁榮；成功",["thrive","flourish","succeed"],"Teams ___ when players trust each other."],
+["provoke","v","to make someone angry; to cause","激怒；引發",["anger","annoy","incite"],"Trash talk is meant to ___ the other team."],
+["punctual","adj","on time","準時的",["prompt","on time","timely"],"Be ___ — the bus leaves at 6 a.m. sharp."],
+["reckless","adj","careless about danger","魯莽的",["careless","rash","wild"],"The ___ hit from behind earned a game misconduct."],
+["reliable","adj","able to be trusted or depended on","可靠的",["dependable","trustworthy","steady"],"A ___ goalie makes everyone play looser."],
+["remote","adj","far away","遙遠的",["distant","faraway","isolated"],"The ___ rink is two hours from the nearest town."],
+["resemble","v","to look like","相似",["look like","take after","mirror"],"The new arena is built to ___ an old-fashioned barn."],
+["restrain","v","to hold back","約束",["hold back","control","curb"],"The linesman had to ___ both players."],
+["retreat","v","to move back or withdraw","撤退",["withdraw","pull back","fall back"],"The defenders ___ to the blue line on a rush."],
+["reveal","v","to show or make known","揭露",["show","disclose","uncover"],"The coach won't ___ the starting goalie until game time."],
+["rigid","adj","stiff; not flexible","僵硬的",["stiff","inflexible","firm"],"The ___ new skates needed a week to break in."],
+["scarce","adj","not enough; rare","稀少的",["rare","limited","short"],"Ice time is ___, so every practice counts."],
+["seize","v","to grab suddenly","抓住",["grab","snatch","take"],"The forward will ___ any loose puck in the slot."],
+["severe","adj","very serious or harsh","嚴重的",["serious","harsh","extreme"],"A ___ ankle sprain kept him out for a month."],
+["sincere","adj","honest and genuine","真誠的",["honest","genuine","heartfelt"],"His ___ thanks to the trainer meant a lot."],
+["sole","adj","only; single","唯一的",["only","single","lone"],"She was the ___ player to score in the shootout."],
+["stern","adj","strict and serious","嚴厲的",["strict","firm","severe"],"The ___ coach rarely smiled, even after wins."],
+["stubborn","adj","refusing to change one's mind","固執的",["obstinate","headstrong","unyielding"],"The ___ defender kept trying the same move that didn't work."],
+["substantial","adj","large in amount or importance","大量的；重大的",["considerable","significant","large"],"The team made ___ progress in the second half of the season."],
+["superior","adj","higher in quality or rank","優越的",["better","greater","higher"],"Their ___ skating speed won the game."],
+["suspend","v","to stop temporarily; to hang","暫停；懸掛",["halt","postpone","hang"],"The league chose to ___ him for two games."],
+["swift","adj","very fast","迅速的",["fast","quick","rapid"],"A ___ counterattack caught the defense flat-footed."],
+["sympathy","n","feeling sorry for someone's trouble","同情",["compassion","pity","understanding"],"Teammates showed ___ when he missed the final shot."],
+["temporary","adj","lasting only a short time","暫時的",["short-term","brief","passing"],"The ___ rink in the parking lot melts by April."],
+["thorough","adj","complete and careful","徹底的",["complete","careful","detailed"],"A ___ warm-up prevents injuries."],
+["tolerate","v","to put up with","容忍",["endure","bear","allow"],"The ref will not ___ arguing after a call."],
+["tragic","adj","extremely sad","悲慘的",["sad","terrible","heartbreaking"],"The movie's ___ ending left everyone silent."],
+["tremendous","adj","very great in size or amount","巨大的",["huge","enormous","immense"],"The ___ roar shook the rafters."],
+["triumph","n","a great victory","勝利",["victory","win","success"],"The underdog's ___ was the story of the season."],
+["urgent","adj","needing immediate action","緊急的",["pressing","critical","immediate"],"An ___ message told the team the bus had moved."],
+["vacant","adj","empty; not occupied","空的",["empty","unoccupied","free"],"The ___ seat belonged to a fan who left at halftime."],
+["vague","adj","unclear","模糊的",["unclear","fuzzy","hazy"],"The ___ directions got half the team lost."],
+["vanish","v","to disappear suddenly","消失",["disappear","fade","evaporate"],"The puck seemed to ___ into the goalie's pads."],
+["vast","adj","very large in area or size","廣大的",["huge","immense","enormous"],"The open-world map is ___; it takes an hour to cross."],
+["vivid","adj","bright; producing clear images","鮮明的",["bright","clear","striking"],"The ___ red jerseys stood out on the ice."],
+["vulnerable","adj","easily hurt or attacked","脆弱的",["exposed","defenseless","weak"],"Without a helmet, a player is ___ to head injuries."],
+["weary","adj","very tired","疲憊的",["tired","exhausted","worn out"],"The ___ players slept the whole bus ride home."],
+["withdraw","v","to pull back or take out","撤回；退出",["remove","retreat","pull out"],"He had to ___ from the tournament because of the flu."],
+["yearn","v","to long for","渴望",["long","crave","wish"],"Fans ___ for another championship."],
+];
+
+// [word, pos, definition, 中文, [synonyms], sentence with ___]
+// themes: basketball / ice hockey / gaming / film
+
+const MID2 = [
+["nocturnal","adj","active at night","夜間活動的",["nightly","night-active","nighttime"],"The ___ owl in the game only appears after dark."],
+["engrossed","adj","completely absorbed in something","全神貫注的",["absorbed","immersed","captivated"],"He was so ___ in the game that he missed dinner."],
+["deteriorate","v","to become worse","惡化",["worsen","decline","decay"],"The ice began to ___ after three hours of games."],
+["saunter","v","to walk slowly and casually","漫步",["stroll","amble","wander"],"He chose to ___ to the bench instead of hustling."],
+["deplorable","adj","shockingly bad","糟糕透頂的",["wretched","terrible","shameful"],"The ___ ice conditions forced the game to be cancelled."],
+["placid","adj","calm and peaceful","平靜的",["calm","tranquil","serene"],"The ___ goalie never panics, even in a shootout."],
+["conscientious","adj","careful and hardworking","認真盡責的",["diligent","careful","thorough"],"The ___ captain checks everyone's gear before games."],
+["scornful","adj","showing contempt or disrespect","輕蔑的",["contemptuous","mocking","disdainful"],"His ___ laugh at the rookie's miss was out of line."],
+["precautionary","adj","done to prevent harm","預防性的",["preventive","protective","safety"],"Wearing a neck guard is a ___ step every goalie should take."],
+["hodgepodge","n","a confused mixture","大雜燴",["jumble","mixture","mishmash"],"The equipment bag was a ___ of tape, pucks, and old gloves."],
+["pledge","v","to promise formally","承諾；宣誓",["promise","vow","swear"],"The players ___ to show up for every practice."],
+["transparent","adj","clear; easy to see through","透明的",["clear","see-through","obvious"],"The ___ glass around the rink keeps fans safe."],
+["summit","n","the highest point; the top","頂峰",["peak","top","pinnacle"],"Winning the title was the ___ of her season."],
+["drought","n","a long period without rain or success","乾旱；低潮",["dry spell","shortage","slump"],"The team's scoring ___ lasted five games."],
+["surplus","n","an amount more than needed","過剩",["excess","extra","oversupply"],"The ___ of pucks in the bag made it heavy to carry."],
+["witty","adj","clever and funny","機智風趣的",["clever","humorous","sharp"],"The ___ announcer kept the crowd laughing between periods."],
+["wretched","adj","very unhappy or of very bad quality","悲慘的；糟糕的",["miserable","awful","dreadful"],"The team felt ___ after the overtime loss."],
+["vicious","adj","cruel and violent","兇惡的",["brutal","savage","cruel"],"The ___ slash earned a five-minute penalty."],
+["rebellious","adj","resisting authority or control","叛逆的",["defiant","disobedient","unruly"],"The ___ player ignored the coach's line changes."],
+["thrifty","adj","careful with money","節儉的",["frugal","economical","sparing"],"The ___ club repaired old gear instead of buying new."],
+];
+// derived word forms: base word -> [[form, meaning], ...]
+const FORMS = {
+reluctant:[["reluctantly","in an unwilling or hesitant way"],["reluctance","unwillingness to do something"]],
+frugal:[["frugality","carefulness with money; thriftiness"],["frugally","in a way that avoids wasting money"]],
+vigilant:[["vigilantly","in a watchful, alert way"],["vigilance","careful attention to danger"]],
+diligent:[["diligently","in a steady, hardworking way"],["diligence","careful, persistent effort"]],
+cautious:[["cautiously","in a careful way, to avoid danger"],["caution","care taken to avoid danger"]],
+hesitate:[["hesitant","unsure; slow to act"],["hesitation","a pause before acting"]],
+persevere:[["perseverance","continued effort despite difficulty"]],
+resilient:[["resilience","the ability to recover quickly"]],
+tenacious:[["tenacity","determination to keep going"]],
+meticulous:[["meticulously","with great attention to detail"]],
+skeptical:[["skepticism","an attitude of doubt"]],
+indifferent:[["indifference","lack of interest or concern"]],
+arrogant:[["arrogance","an exaggerated sense of one's own importance"]],
+generous:[["generosity","willingness to give freely"]],
+humble:[["humility","the quality of being modest"]],
+anxious:[["anxiety","worry or nervousness"]],
+confident:[["confidence","belief in oneself"]],
+hostile:[["hostility","unfriendly or aggressive behavior"]],
+deliberate:[["deliberately","on purpose"]],
+reckless:[["recklessly","without caring about danger"]],
+timid:[["timidly","in a shy, fearful way"]],
+candid:[["candidly","in an honest, direct way"]],
+eloquent:[["eloquence","fluent, persuasive speech"]],
+prudent:[["prudence","careful good judgment"]],
+precise:[["precision","exactness"]],
+accurate:[["accuracy","the state of being correct"]],
+obvious:[["obviously","clearly; as anyone can see"]],
+sincere:[["sincerity","honesty of feeling"]],
+severe:[["severity","the seriousness of something"]],
+abundant:[["abundance","a very large amount"]],
+scarce:[["scarcity","a shortage"]],
+superior:[["superiority","the state of being better or higher"]],
+exaggerate:[["exaggeration","a statement that makes something seem bigger than it is"]],
+admire:[["admiration","respect and approval"]],
+deteriorate:[["deterioration","the process of becoming worse"]],
+placid:[["placidly","calmly"]],
+scornful:[["scorn","a feeling that something is worthless"]],
+conscientious:[["conscientiously","in a careful, dutiful way"]],
+};
+
+const MID3 = [
+["abolish","v","to officially end or get rid of","廢除",["end","eliminate","cancel"],"The league voted to ___ the offside rule for under-8 games."],
+["accomplish","v","to succeed in doing","完成",["achieve","complete","finish"],"She managed to ___ her goal of scoring in every match."],
+["acknowledge","v","to admit or recognize","承認",["admit","recognize","accept"],"The striker had to ___ that the keeper was the better player today."],
+["adjacent","adj","next to","相鄰的",["neighboring","adjoining","bordering"],"The practice field is ___ to the main stadium."],
+["ambition","n","a strong desire to achieve something","抱負",["goal","aspiration","drive"],"His ___ is to play for the national team."],
+["amateur","n","a person who does something for fun, not pay","業餘者",["beginner","nonprofessional","hobbyist"],"Every pro was once an ___ kicking a ball in the park."],
+["attentive","adj","paying close attention","專注的",["alert","observant","focused"],"An ___ defender watches the striker's hips, not the ball."],
+["avid","adj","very enthusiastic","熱衷的",["eager","keen","passionate"],"The ___ fan has watched every World Cup final."],
+["bashful","adj","shy","害羞的",["shy","timid","reserved"],"The ___ new player barely spoke at the first practice."],
+["bleak","adj","cold, empty, and hopeless","黯淡的",["gloomy","dreary","grim"],"The team's chances looked ___ after the red card."],
+["blunder","n","a careless mistake","大錯",["mistake","error","slip"],"The keeper's ___ let in an easy goal."],
+["bustling","adj","full of activity","熙熙攘攘的",["busy","lively","hectic"],"The ___ stadium was packed an hour before kickoff."],
+["clutter","n","a messy collection of things","雜亂",["mess","jumble","disorder"],"The ___ of cones and balls covered the field."],
+["compact","adj","small and closely packed","緊湊的",["small","dense","tight"],"The ___ defense left no space between players."],
+["compromise","n","an agreement where each side gives up something","妥協",["agreement","settlement","middle ground"],"The two captains reached a ___ on the team's formation."],
+["conceited","adj","too proud of oneself","自負的",["arrogant","vain","smug"],"The ___ striker never passed, even when teammates were open."],
+["confront","v","to face or challenge directly","面對；對質",["face","challenge","tackle"],"The captain had to ___ the player who kept skipping practice."],
+["convenient","adj","easy to use or reach","方便的",["handy","accessible","suitable"],"The field is ___ because it's right next to school."],
+["courageous","adj","brave","勇敢的",["brave","bold","fearless"],"The ___ keeper dove at the striker's feet."],
+["crafty","adj","clever at tricking others","狡猾的",["cunning","sly","tricky"],"The ___ winger faked left and went right."],
+["cramped","adj","uncomfortably small","狹窄的",["tight","crowded","confined"],"The ___ locker room barely fit the whole team."],
+["dawdle","v","to waste time; move slowly","磨蹭",["linger","dally","loiter"],"Don't ___ on the way to practice or you'll miss warm-ups."],
+["decipher","v","to figure out something hard to read","破解",["decode","interpret","solve"],"The team had to ___ the coach's messy diagram."],
+["dependable","adj","reliable","可靠的",["reliable","trustworthy","steady"],"A ___ defender is worth more than a flashy one."],
+["detour","n","a longer route that avoids something","繞道",["bypass","diversion","roundabout way"],"The bus took a ___ around the closed road to the stadium."],
+["dismay","n","a feeling of worry and disappointment","沮喪",["distress","disappointment","alarm"],"To the team's ___, the match was rained out."],
+["drowsy","adj","sleepy","昏昏欲睡的",["sleepy","tired","dozy"],"The ___ players yawned through the morning warm-up."],
+["elegant","adj","graceful and stylish","優雅的",["graceful","stylish","refined"],"Her ___ first touch made the pass look easy."],
+["enthusiasm","n","strong excitement and interest","熱情",["excitement","eagerness","passion"],"The rookie's ___ at practice was contagious."],
+["envious","adj","wanting what someone else has","嫉妒的",["jealous","covetous","resentful"],"He was ___ of his friend's new cleats."],
+["exert","v","to use effort or force","施加；發揮",["apply","use","put forth"],"Players must ___ themselves for the full ninety minutes."],
+["famished","adj","extremely hungry","非常飢餓的",["starving","ravenous","hungry"],"After the double-header, the team was ___."],
+["flourish","v","to grow or develop well","茁壯",["thrive","prosper","bloom"],"Young players ___ when coaches let them make mistakes."],
+["forbid","v","to order someone not to do something","禁止",["ban","prohibit","outlaw"],"The coach chose to ___ phones during team meetings."],
+["fortunate","adj","lucky","幸運的",["lucky","blessed","favored"],"We were ___ that the rain stopped before kickoff."],
+["gratitude","n","thankfulness","感激",["thankfulness","appreciation","thanks"],"The team showed ___ to the parents who drove every weekend."],
+["hazardous","adj","dangerous","危險的",["dangerous","risky","unsafe"],"Playing on the icy field was ___."],
+["hoard","v","to collect and hide away a large amount","囤積",["stockpile","store","amass"],"He likes to ___ old match tickets in a shoebox."],
+["imitate","v","to copy","模仿",["copy","mimic","emulate"],"Young players try to ___ their favorite striker's celebration."],
+["impulsive","adj","acting without thinking","衝動的",["rash","hasty","spontaneous"],"The ___ tackle earned a yellow card."],
+["inevitable","adj","certain to happen","不可避免的",["unavoidable","certain","inescapable"],"With ten men, a goal against felt ___."],
+["initiative","n","the ability to act on one's own","主動性",["drive","ambition","enterprise"],"She took the ___ to organize extra practice."],
+["insist","v","to demand firmly","堅持",["demand","assert","maintain"],"The coach continued to ___ on a proper warm-up."],
+["interpret","v","to explain the meaning of","解釋；詮釋",["explain","translate","understand"],"Players must ___ the referee's hand signals."],
+["linger","v","to stay longer than necessary","逗留",["stay","remain","loiter"],"Fans chose to ___ after the match hoping for autographs."],
+["meddle","v","to interfere in others' business","干涉",["interfere","intrude","butt in"],"Parents shouldn't ___ with the coach's lineup."],
+["mimic","v","to imitate, often to make fun","模仿",["imitate","copy","impersonate"],"He likes to ___ the referee's whistle."],
+["miserable","adj","very unhappy","悲慘的；痛苦的",["unhappy","wretched","sad"],"The ___ players trudged off after the 5–0 loss."],
+["moderate","adj","average; not extreme","適度的",["average","mild","reasonable"],"The ___ heat made the afternoon match bearable."],
+["negotiate","v","to discuss in order to reach agreement","談判",["bargain","discuss","settle"],"The captains had to ___ which team kicks off."],
+["numerous","adj","many","眾多的",["many","countless","several"],"The striker missed ___ chances in the first half."],
+["obstacle","n","something that blocks the way","障礙",["barrier","hurdle","hindrance"],"The tall defender was an ___ for every cross."],
+["persuade","v","to convince someone","說服",["convince","sway","urge"],"She managed to ___ her brother to join the team."],
+["pursue","v","to chase or follow","追求",["chase","follow","seek"],"The defender chose to ___ the winger down the line."],
+["reassure","v","to make someone feel less worried","使安心",["comfort","encourage","calm"],"The coach tried to ___ the keeper after the mistake."],
+["rummage","v","to search by moving things around","翻找",["search","dig","hunt"],"He had to ___ through the bag for his shin guards."],
+["sturdy","adj","strongly built","堅固的",["strong","solid","robust"],"The ___ goalposts survived the storm."],
+["tamper","v","to interfere with something, often to damage it","竄改",["meddle","alter","fiddle"],"Nobody should ___ with the match ball."],
+["unruly","adj","hard to control","難管束的",["disorderly","wild","rowdy"],"The ___ fans threw cups onto the field."],
+["vigorous","adj","strong and energetic","充滿活力的",["energetic","lively","forceful"],"A ___ warm-up gets the legs ready."],
+];
+
+const IS1 = {
+abandon:["The team refused to ___ their pressing plan after one goal.","Never ___ a mine halfway; the diamonds are usually deeper.","Don't ___ the problem just because the first method didn't work."],
+abrupt:["The ___ whistle stopped the attack cold.","An ___ drop in the cave led straight to lava.","The graph makes an ___ jump at x equals 3."],
+absurd:["Playing a match with no goalkeeper is ___.","Building a house out of TNT is ___.","Claiming 7 times 8 is 54 is ___."],
+accurate:["Her ___ passes land on her teammate's foot every time.","An ___ bow shot hits the skeleton from across the ravine.","Show your work so I can see whether the answer is ___."],
+achieve:["He trained every day to ___ a spot on the first team.","You ___ the trophy when you defeat the Ender Dragon.","She hopes to ___ a perfect score on the math test."],
+adapt:["Players must ___ when the field is muddy.","You must ___ your build when you reach the Nether.","Good problem solvers ___ when a shortcut doesn't work."],
+adequate:["Two warm-up laps were ___ before the match.","A wooden pickaxe is ___ for stone, but not for diamonds.","One example is not ___ proof that a rule always works."],
+admire:["Young players ___ the captain's calm under pressure.","Everyone will ___ a castle with working redstone doors.","I ___ how neatly she lines up her long division."],
+alert:["Stay ___; the counterattack comes fast.","Stay ___ at night; creepers are silent.","Stay ___ for negative signs when you subtract."],
+ally:["A good midfielder is the striker's closest ___.","The tamed wolf is your ___ against zombies.","A calculator is an ___, but it can't think for you."],
+ancient:["The ___ stadium has stone steps for seats.","The ___ temple in the jungle hides treasure.","The ___ Greeks proved theorems we still use today."],
+anticipate:["A keeper learns to ___ where the shot is going.","Experienced players ___ a creeper behind every corner.","If you ___ the pattern, you can guess the next number."],
+anxious:["He felt ___ before taking the penalty.","I was ___ about crossing the lava lake.","She felt ___ before the timed multiplication quiz."],
+apparent:["It was ___ from kickoff that the pitch was too wet.","It became ___ that the village had no iron.","It's ___ from the graph that the line goes up."],
+appropriate:["Cleats are the ___ shoes for grass.","A diamond sword is ___ for the final boss.","Choose the ___ formula for area, not perimeter."],
+ascend:["The team began to ___ the league table.","Build a staircase to ___ out of the ravine.","The values ___ as you move right on the number line."],
+assist:["A good winger will ___ on more goals than she scores.","Villagers ___ you by trading emeralds.","A diagram can ___ you in solving a word problem."],
+authentic:["The ___ jersey was signed by the whole team.","An ___ survival world has cheats turned off.","An ___ proof uses only rules we've already shown."],
+baffle:["The new formation seemed to ___ the defenders.","Redstone circuits ___ most beginners.","Negative exponents ___ half the class."],
+barren:["The ___ training ground had no grass left.","The ___ desert biome has almost no trees.","The ___ worksheet had problems but no explanations."],
+beneficial:["Stretching is ___ for tired legs.","Sleeping in a bed is ___; it skips the night.","Checking your answer is ___ even when you feel sure."],
+bizarre:["The goalkeeper's ___ pink gloves got everyone's attention.","The ___ mushroom island is covered in red and brown.","It's ___ that a negative times a negative is positive."],
+boast:["He likes to ___ about his hat trick.","Don't ___ about your diamonds; someone will raid your base.","She never likes to ___ about her test scores."],
+brittle:["The ___ old ball cracked on the first kick.","Glass is ___; one hit and it shatters.","A ___ argument falls apart under one counterexample."],
+burden:["Being captain can feel like a ___ when the team loses.","A full inventory is a ___ when you need to run.","Carrying all the numbers in your head is a ___; write them down."],
+capable:["She is ___ of playing any position.","A diamond pickaxe is ___ of mining obsidian.","He is ___ of solving two-step equations alone."],
+casual:["It was a ___ kickabout in the park.","A ___ creative-mode build has no deadline.","A ___ guess is not the same as an estimate."],
+cautious:["Be ___ near the goalkeeper's area.","Be ___ when digging straight down.","Be ___ with decimal points when you multiply."],
+cease:["Play will ___ when the referee blows the whistle.","The rain will ___ in a few minutes of game time.","The pattern will ___ to work after ten terms."],
+cherish:["She will ___ the ball from her first goal.","I ___ my first diamond, so I never crafted it.","He will ___ the ribbon from the math olympiad."],
+coarse:["The ___ artificial turf scraped his knees.","___ dirt looks rough and dark compared to grass.","A ___ estimate rounds everything to the nearest hundred."],
+collapse:["The defense began to ___ in the last ten minutes.","Sand will ___ if you dig under it.","The whole proof will ___ if step two is wrong."],
+collide:["Two defenders managed to ___ going for the same header.","Minecarts ___ if you send two on one track.","When two lines ___ on a graph, that's the solution."],
+commence:["The match will ___ at three o'clock.","The raid will ___ when the bell rings.","The timed test will ___ when the teacher says go."],
+compassion:["She showed ___ by helping the injured opponent up.","Showing ___, he shared food with the new player.","The teacher showed ___ by giving extra time."],
+competent:["A ___ referee keeps the match under control.","A ___ builder plans the layout before placing blocks.","A ___ student checks units in every answer."],
+conceal:["The striker tried to ___ her limp from the coach.","Hide your chests to ___ your diamonds from raiders.","Parentheses can ___ a trick in the order of operations."],
+confident:["He looked ___ stepping up to the penalty spot.","I felt ___ fighting the Wither with full armor.","She felt ___ about the fractions test."],
+conflict:["The ___ between the two strikers hurt the team.","The ___ between the two factions started over a mine.","There's no ___ between the two formulas; they give the same answer."],
+conquer:["The team hopes to ___ the league this year.","Your goal is to ___ the End and beat the dragon.","Once you ___ fractions, decimals are easy."],
+considerable:["The new stadium cost a ___ amount.","Building the castle took a ___ number of blocks.","There is a ___ difference between 0.5 and 0.05."],
+consistent:["Her ___ effort earned a starting spot.","A ___ layout makes a base easy to navigate.","A ___ pattern lets you predict the hundredth term."],
+contribute:["Everyone should ___, even the substitutes.","Every player must ___ blocks to the group build.","Each term will ___ to the total sum."],
+convince:["It took weeks to ___ the coach to try a new formation.","Nothing could ___ him to play on peaceful mode.","One example can't ___ a mathematician; you need proof."],
+cooperate:["The midfielders must ___ to break the press.","Players ___ to build a giant railway.","Partners ___ to solve the puzzle faster."],
+courteous:["It's ___ to shake hands after the match.","It's ___ not to break other players' builds.","It's ___ to wait for everyone before checking answers."],
+crucial:["The penalty was ___ with the score tied.","A water bucket is ___ when you fall into lava.","The first step is ___; get it wrong and everything after is wrong."],
+dedicate:["He chose to ___ his summer to free kicks.","She chose to ___ a weekend to building the castle.","He chose to ___ ten minutes a day to times tables."],
+delicate:["The ___ pass needed a soft first touch.","Glass panes are ___ and break easily.","The ___ balance in the equation tips if you change one side."],
+demolish:["The club plans to ___ the old stand.","We had to ___ the wall to expand the farm.","A single counterexample can ___ a claim."],
+dense:["The ___ defense packed the penalty box.","The ___ jungle hides the temple.","A ___ page of equations is hard to read."],
+descend:["The team began to ___ toward the relegation zone.","Build stairs to ___ safely into the mine.","The values ___ as x gets smaller."],
+despair:["Fans were in ___ after the fourth loss.","I was in ___ when the lava destroyed my diamonds.","She was in ___ when she saw the long problem."],
+devour:["The hungry team will ___ the pizza in minutes.","Zombies ___ the villagers if there's no fence.","The quick students ___ the bonus problems."],
+dignity:["She accepted the loss with ___.","He admitted the creeper got him, with ___.","He accepted the wrong answer with ___ and tried again."],
+disaster:["The first half was a ___: three goals against.","Digging straight down into lava was a ___.","Forgetting the negative sign was a ___ for the whole problem."],
+discard:["Players ___ broken boots in the bin.","___ cobblestone when your inventory is full.","___ the answers that make the equation false."],
+dismiss:["The coach chose to ___ the rumor about the transfer.","Don't ___ the warning about creepers.","Don't ___ an answer just because it's a fraction."],
+distinct:["Each position has a ___ role.","Each biome has a ___ color.","Prime numbers have a ___ property: only two factors."],
+distract:["Fans wave scarves to ___ the penalty taker.","The music can ___ you from the zombie behind you.","Don't let the extra numbers ___ you from the question."],
+dominate:["The home team managed to ___ the first half.","Our faction continues to ___ the server.","The largest term will ___ the sum."],
+drastic:["Pulling the keeper for a striker was ___.","Deleting the whole world was ___.","Rounding to the nearest thousand is too ___ here."],
+durable:["___ cleats last the whole season.","Netherite armor is the most ___.","A ___ method works on every similar problem."],
+eager:["The rookie was ___ for her first match.","I was ___ to explore the new update.","He was ___ to try the bonus question."],
+earnest:["His ___ apology to the team was accepted.","Her ___ request for help building got a yes.","His ___ effort showed in every step of his work."],
+efficient:["An ___ striker needs few chances to score.","An ___ farm grows wheat with one water source.","An ___ method solves it in three steps, not ten."],
+eliminate:["One more loss would ___ us from the cup.","___ the spawner to stop the zombies.","___ the wrong answers first on multiple choice."],
+emerge:["A new star began to ___ in the second half of the season.","A new base began to ___ on the hill.","A pattern began to ___ after the fifth row."],
+endure:["Players must ___ freezing morning practices.","You must ___ the night without a bed.","You must ___ long problems to get to the fun ones."],
+enormous:["The ___ stadium holds 80,000 fans.","The ___ castle took a month to build.","A googol is an ___ number."],
+essential:["Shin guards are ___ equipment.","A crafting table is ___ on day one.","Knowing times tables is ___ for division."],
+evident:["It was ___ the rookie had practiced her corners.","It was ___ the base had been raided.","It is ___ from the graph that the line is straight."],
+exaggerate:["He tends to ___ how far his free kick was.","She likes to ___ how big her castle is.","Don't ___ the estimate; round carefully."],
+};
+const IS2 = {
+exceed:["Her goals this season will ___ last year's.","The tower will ___ the build height limit.","The answer will ___ one hundred."],
+exhaust:["Extra time will ___ even the fittest players.","A long mining trip will ___ your food supply.","A hard test can ___ your focus by the end."],
+expand:["The league will ___ to twelve teams.","We plan to ___ the farm next week.","___ the brackets before you simplify."],
+extraordinary:["The bicycle kick was ___.","Her redstone computer is ___.","Pi is an ___ number; it never ends."],
+fatigue:["___ caused the sloppy passes late in the match.","Hunger and ___ slow your character down.","Mental ___ causes silly mistakes at the end of a test."],
+feeble:["His ___ shot barely reached the keeper.","A ___ wooden door won't stop a zombie.","A ___ argument has no evidence."],
+ferocious:["The ___ tackle earned a red card.","The ___ Wither destroys everything around it.","The ___ competition for first place came down to one problem."],
+flaw:["His one ___ is heading the ball.","The one ___ in the base is the open roof.","The one ___ in the proof is the second line."],
+flexible:["A ___ schedule allows practice after school.","A ___ plan changes when you find a cave.","A ___ thinker tries another method when the first fails."],
+fragile:["The team's one-goal lead felt ___.","Glass bridges are ___.","A ___ guess collapses under one check."],
+frantic:["The ___ final minute had everyone attacking.","The ___ run from the creepers ended at the door.","The ___ last minute of the quiz led to mistakes."],
+frequent:["Water breaks are ___ in summer matches.","___ saves protect your world.","___ practice makes mental math faster."],
+generous:["The ___ coach bought ice cream for everyone.","A ___ player shares diamonds with new players.","The ___ teacher gave partial credit."],
+genuine:["Her smile after the win was ___.","A ___ village has real villagers, not statues.","A ___ solution works for every case."],
+gigantic:["The ___ stadium shook with cheers.","The ___ dragon fills the whole sky.","A ___ number like a trillion has twelve zeros."],
+gloomy:["The dressing room was ___ after the loss.","The ___ cave had no torches.","A ___ mood makes math feel harder than it is."],
+grateful:["He was ___ for the rides to every match.","I'm ___ for the friend who gave me a bed.","She was ___ for the extra explanation."],
+grim:["The coach's face was ___ after the third goal.","The ___ Nether is all fire and darkness.","The ___ results showed half the class failed."],
+grueling:["The ___ tryout lasted three hours.","The ___ trip to the stronghold took all day.","The ___ exam had fifty problems in an hour."],
+harsh:["The ___ red card seemed unfair.","The ___ desert sun makes water important.","The ___ grading took a point for every missing unit."],
+hasty:["A ___ pass went straight to the other team.","A ___ dig led into lava.","A ___ answer skipped the negative sign."],
+hesitate:["Don't ___ when you see an open goal.","Don't ___ to jump the gap; the lava is rising.","Don't ___ to try; a wrong answer teaches you."],
+hilarious:["The mascot's fall into the goal was ___.","The pig riding a minecart was ___.","The teacher's joke about pi was ___."],
+hoist:["The captain got to ___ the trophy.","Use a piston to ___ the block up.","___ the flag when you solve the bonus."],
+hostile:["The ___ crowd booed every pass.","___ mobs spawn in the dark.","Don't be ___ when a partner gets a different answer."],
+humble:["Despite the hat trick, he stayed ___.","The ___ builder said her castle was 'just okay'.","The ___ winner said others could have solved it too."],
+humiliate:["Losing 8–0 seemed to ___ the team.","Getting blown up by a creeper in front of friends can ___ you.","Don't let one bad quiz ___ you."],
+idle:["The ___ substitutes stretched on the sideline.","The ___ furnace has no fuel.","An ___ variable has no value yet."],
+ignorant:["He was ___ of the offside rule.","She was ___ of how to tame a wolf.","He was ___ of the order of operations."],
+immense:["The ___ stadium seats a whole city.","The ___ ocean biome takes hours to cross.","An ___ number has more digits than you can count."],
+impatient:["The ___ striker shot before the keeper moved.","The ___ player dug straight down.","The ___ student skipped the check and got it wrong."],
+imply:["The coach's silence seemed to ___ he was upset.","The torches ___ someone was here before.","If a equals b, that doesn't ___ b is bigger."],
+inferior:["___ cleats slipped on the wet grass.","A wooden sword is ___ to a diamond one.","An ___ method takes twice as long."],
+inquire:["She called to ___ about tryouts.","Villagers ___ what you want to trade.","Students ___ why we can't divide by zero."],
+inspire:["Her comeback story continues to ___ young players.","Big builds ___ others to try harder.","A good teacher can ___ a love of math."],
+intense:["The ___ second half went to penalties.","The ___ battle with the dragon lasted ten minutes.","The ___ competition had one point between the top two."],
+investigate:["The league will ___ the crowd trouble.","___ the strange noise before you dig.","___ the pattern before guessing the rule."],
+isolate:["The defense tried to ___ the star striker.","___ the creeper before you attack.","___ the variable on one side of the equation."],
+jeopardy:["A second yellow card put the win in ___.","Low health puts your diamonds in ___.","One wrong digit puts the whole answer in ___."],
+legitimate:["The replay confirmed the goal was ___.","A ___ win uses no cheats.","A ___ proof uses only accepted rules."],
+loyal:["The ___ fans travel to every away match.","A tamed wolf stays ___ to you.","Stay ___ to one method until you finish."],
+lure:["A fake run can ___ the defender away.","Use wheat to ___ cows into the pen.","The easy first step can ___ you into skipping the check."],
+luxury:["A heated bench is a ___.","A beacon is a ___ most players never get.","Extra time on a test is a ___."],
+massive:["The ___ defender won every header.","The ___ mountain biome blocks the sun.","A ___ number like a billion has nine zeros."],
+mature:["He handled the loss in a ___ way.","A ___ player doesn't grief other builds.","A ___ student admits when a method didn't work."],
+mock:["Good teammates don't ___ a keeper after a mistake.","Don't ___ new players who die to creepers.","Don't ___ a classmate who gets a different answer."],
+modest:["She was ___ about scoring the winner.","He was ___ about his huge redstone machine.","A ___ estimate is a safe starting point."],
+monotonous:["Running laps for an hour is ___.","Mining one straight tunnel is ___.","Doing fifty identical problems is ___."],
+motive:["His ___ for training was making the first team.","Her ___ for mining was finding diamonds.","The ___ for checking is catching silly mistakes."],
+murky:["The ___ puddles made the pitch slippery.","The ___ swamp water hides slime blocks.","The ___ instructions left everyone confused."],
+negligent:["The ___ player forgot his shin guards.","The ___ player left the door open at night.","The ___ student forgot the units."],
+nimble:["The ___ winger dodged three tackles.","A ___ player jumps across lava gaps.","A ___ mind spots the shortcut."],
+obedient:["The ___ rookie did every drill.","The ___ dog sits when you tell it to.","The ___ student followed every step of the method."],
+observe:["Scouts ___ every match.","___ the mob's pattern before attacking.","___ the pattern before writing the rule."],
+obvious:["It was ___ who the best player was.","The ___ path into the temple is a trap.","The ___ answer is sometimes wrong; check it."],
+optimistic:["The coach stayed ___ at 0–2.","I'm ___ we'll find diamonds today.","She's ___ about the next test."],
+ordeal:["The six-hour bus trip was an ___.","Escaping the Nether without a portal was an ___.","The two-hour exam was an ___."],
+outrage:["The missed penalty call caused ___.","Griefing the shared build caused ___.","Grading that mistake as wrong caused ___."],
+overwhelm:["Three quick goals seemed to ___ the visitors.","A raid can ___ a village without walls.","Too many steps can ___ a beginner."],
+peculiar:["The keeper has a ___ habit of talking to the posts.","The ___ villager only trades at night.","Zero is a ___ number; it's neither positive nor negative."],
+pessimistic:["Fans were ___ after the captain's injury.","The ___ player expected the raid to fail.","The ___ student assumed she'd fail before starting."],
+plead:["He tried to ___ with the referee.","The villager seems to ___ for help during a raid.","Students ___ for one more minute on the test."],
+ponder:["The coach paused to ___ the substitution.","___ where to build before placing the first block.","___ the problem before writing anything."],
+portable:["A ___ goal fits in the car.","A ___ chest carries items between bases.","A ___ whiteboard is handy for math practice."],
+precise:["A ___ cross landed on the striker's head.","___ redstone timing makes the door work.","A ___ answer includes the units."],
+predict:["Nobody could ___ the underdog's win.","You can ___ where the mob will spawn.","Use the pattern to ___ the next number."],
+prominent:["The ___ coach has won five titles.","The ___ tower is visible from anywhere.","The ___ mathematician proved the theorem."],
+prosper:["Teams ___ when players trust each other.","Villages ___ when they have walls and farms.","Students ___ when they ask questions."],
+};
+const IS3 = {
+provoke:["Trash talk is meant to ___ the other team.","Hitting a pig won't ___ it, but hitting a wolf will.","A tricky question is meant to ___ thinking."],
+punctual:["Be ___; kickoff is at nine.","Be ___ for the server event.","Be ___ for the math club meeting."],
+reckless:["The ___ tackle got a red card.","A ___ player digs without torches.","A ___ guess skips the work."],
+reliable:["A ___ keeper calms the whole team.","A ___ farm feeds you every day.","A ___ method works every time."],
+remote:["The ___ field is an hour from town.","The ___ island has no villages.","The ___ possibility is still worth checking."],
+resemble:["The new kit is designed to ___ the 1990s one.","The build is meant to ___ a real castle.","These two shapes ___ each other but aren't equal."],
+restrain:["The referee had to ___ both players.","A fence will ___ the sheep.","___ yourself from guessing; work it out."],
+retreat:["The defenders ___ to the edge of the box.","___ to the base when night falls.","___ to the last correct step when you get stuck."],
+reveal:["The coach won't ___ the lineup.","Mining will ___ ores in the wall.","Simplifying will ___ the answer."],
+rigid:["The ___ new boots gave him blisters.","Obsidian is ___ and hard to break.","Order of operations is ___; you can't change it."],
+scarce:["Pitch time is ___ in winter.","Diamonds are ___ above level 16.","Time is ___ on a timed test."],
+seize:["The striker will ___ any loose ball.","___ the diamonds before the lava flows.","___ the chance to use the shortcut."],
+severe:["A ___ ankle sprain ended her season.","___ damage from the explosion ruined the farm.","A ___ error in step one ruined the whole answer."],
+sincere:["His ___ thanks to the coach meant a lot.","A ___ apology for griefing was accepted.","A ___ effort counts even if the answer is wrong."],
+sole:["She was the ___ scorer in the shootout.","He was the ___ survivor of the raid.","Two is the ___ even prime number."],
+stern:["The ___ coach rarely smiled.","The ___ iron golem guards the village.","The ___ teacher gave no extra time."],
+stubborn:["The ___ striker kept shooting from too far.","The ___ player refuses to use a bed.","The ___ student refused to try the new method."],
+substantial:["The team made ___ progress this season.","The castle needs a ___ amount of stone.","There's a ___ difference between 10 and 100."],
+superior:["Their ___ passing won the match.","Netherite is ___ to diamond.","The ___ method takes half the time."],
+suspend:["The league chose to ___ him for two matches.","Admins chose to ___ the griefer.","The teacher chose to ___ the quiz until Friday."],
+swift:["A ___ counterattack beat the defense.","A ___ escape from the creeper saved me.","A ___ estimate checks whether the answer makes sense."],
+sympathy:["Teammates showed ___ after his missed penalty.","Friends showed ___ when my world was deleted.","The teacher showed ___ for the tricky question."],
+temporary:["The ___ goal stands in the backyard.","A ___ dirt shelter keeps you safe for one night.","A ___ guess helps you start."],
+thorough:["A ___ warm-up prevents injuries.","A ___ search of the cave finds all the ore.","A ___ check catches every mistake."],
+tolerate:["The referee won't ___ arguing.","The server won't ___ griefing.","The rule won't ___ dividing by zero."],
+tragic:["The ___ injury ended his career.","The ___ loss of my diamonds happened in lava.","The ___ ending was a careless error on the last line."],
+tremendous:["The ___ roar shook the stadium.","The ___ explosion left a crater.","A ___ number like a quadrillion is hard to imagine."],
+triumph:["The underdog's ___ shocked the league.","Beating the dragon was a ___.","Solving the hardest problem was a ___."],
+urgent:["An ___ message said the match moved.","An ___ warning: the lava is spreading.","An ___ reminder: the test is tomorrow."],
+vacant:["The ___ seat belonged to a fan who left early.","The ___ house has no villager.","The ___ box is where the answer goes."],
+vague:["The ___ directions got the team lost.","The ___ map didn't show the stronghold.","A ___ answer like 'about a lot' isn't enough."],
+vanish:["The lead seemed to ___ in five minutes.","Items ___ after five minutes on the ground.","The x terms ___ when you subtract."],
+vast:["The ___ stadium seats a whole city.","The ___ ocean takes hours to cross.","The ___ difference between a million and a billion surprises people."],
+vivid:["The ___ orange kit stood out on the grass.","The ___ colors of the coral reef are beautiful.","A ___ diagram makes the problem clearer."],
+vulnerable:["Without shin guards, your legs are ___.","Without armor, you're ___ to arrows.","A rushed answer is ___ to small mistakes."],
+weary:["The ___ players slept on the bus.","The ___ miner headed back to bed.","The ___ student made mistakes on the last page."],
+withdraw:["He had to ___ from the cup with the flu.","___ from the fight if your health is low.","___ your first guess if the check fails."],
+yearn:["Fans ___ for another title.","Players ___ for the next big update.","Students ___ for the day fractions make sense."],
+nocturnal:["The ___ groundskeeper waters the pitch at midnight.","___ mobs like zombies come out at night.","The ___ student did her math homework at 11 p.m."],
+engrossed:["He was so ___ in the match that he missed dinner.","She was so ___ in building that she forgot to eat.","He was so ___ in the puzzle that the bell surprised him."],
+deteriorate:["The pitch began to ___ after three matches in the rain.","Tools ___ with use until they break.","Your skills ___ if you skip practice."],
+saunter:["Don't ___ back on defense after a missed shot.","Don't ___ through the dark; sprint.","Don't ___ through easy problems; time matters."],
+deplorable:["The ___ pitch was full of holes.","The ___ griefing destroyed a month of work.","The ___ handwriting made the numbers unreadable."],
+placid:["The ___ keeper never panics in a shootout.","The ___ cow just stands there eating grass.","The ___ student stayed calm during the timed test."],
+conscientious:["The ___ captain checks everyone's gear.","The ___ builder lights every corner so nothing spawns.","The ___ student shows every step."],
+scornful:["The ___ fans booed the referee.","The ___ player mocked beginners' dirt houses.","Don't be ___ of simple methods; they work."],
+precautionary:["Taping ankles is a ___ step.","Sleeping before night is a ___ habit.","Estimating first is a ___ check."],
+hodgepodge:["The kit bag was a ___ of balls, cones, and bibs.","My chest is a ___ of dirt, seeds, and one diamond.","The worksheet was a ___ of fractions, decimals, and shapes."],
+pledge:["The players ___ to attend every practice.","Faction members ___ not to grief.","Students ___ to show their work."],
+transparent:["The ___ goal net lets fans see the shot.","Glass is ___; you can see mobs through it.","A ___ method shows every step clearly."],
+summit:["Winning the cup was the ___ of her season.","Build a beacon at the ___ of the mountain.","Finishing the olympiad was the ___ of his year."],
+drought:["The striker's goal ___ lasted six matches.","A diamond ___ means no finds for days.","A ___ of correct answers means it's time to review."],
+surplus:["A ___ of balls made the bag heavy.","A ___ of cobblestone fills every chest.","A ___ of time at the end lets you check answers."],
+witty:["The ___ announcer kept the crowd laughing.","The ___ sign on the base said 'Creepers welcome, briefly.'","The ___ teacher makes jokes about pi."],
+wretched:["The team felt ___ after the 5–0 loss.","The ___ dirt hut leaked rain.","The ___ score on the quiz made her study harder."],
+vicious:["The ___ tackle broke his shin guard.","The ___ Wither destroys everything.","Don't be ___ when correcting a partner's mistake."],
+rebellious:["The ___ striker ignored the coach's positions.","The ___ player breaks every server rule.","The ___ student refused to use the method shown."],
+thrifty:["The ___ club repaired old nets instead of buying new.","The ___ player saves every iron ingot.","A ___ method uses the fewest steps."],
+abolish:["The league voted to ___ the offside rule for under-8s.","The server chose to ___ PvP.","The teacher chose to ___ homework on Fridays."],
+accomplish:["She managed to ___ a goal in every match.","You ___ the trophy by killing the dragon.","He hopes to ___ a perfect score."],
+acknowledge:["The striker had to ___ the keeper was better today.","He had to ___ the creeper got him fair and square.","She had to ___ her method was wrong."],
+adjacent:["The practice field is ___ to the stadium.","Build the farm ___ to the house.","Two ___ angles share a side."],
+ambition:["His ___ is to play for the national team.","Her ___ is to build a whole city.","His ___ is to win the math olympiad."],
+amateur:["Every pro was once an ___ kicking a ball in the park.","An ___ builder starts with a dirt house.","An ___ mathematician can still enjoy puzzles."],
+attentive:["An ___ defender watches the striker's hips.","An ___ player hears the creeper hiss.","An ___ student catches the trick in the question."],
+avid:["The ___ fan has seen every World Cup final.","The ___ builder plays every weekend.","The ___ puzzler solves one every morning."],
+bashful:["The ___ new player barely spoke at practice.","The ___ player never joins voice chat.","The ___ student never raises her hand, even when right."],
+bleak:["The team's chances looked ___ after the red card.","The ___ tundra has nothing but snow.","The ___ score of 3 out of 20 meant more practice."],
+blunder:["The keeper's ___ let in an easy goal.","Digging into lava was a ___.","Forgetting to carry the one was a ___."],
+bustling:["The ___ stadium was packed before kickoff.","The ___ village has twenty villagers.","The ___ math fair had a crowd at every table."],
+clutter:["The ___ of cones covered the field.","The ___ in my chest made finding iron hard.","The ___ of numbers on the page hid the answer."],
+compact:["The ___ defense left no space.","A ___ base is easy to light up.","A ___ formula fits on one line."],
+compromise:["The captains reached a ___ on the formation.","The factions reached a ___ about the border.","The ___ was to show work for half the problems."],
+conceited:["The ___ striker never passed.","The ___ player brags about diamonds all day.","The ___ student thinks he never needs to check."],
+confront:["The captain had to ___ the player who skipped practice.","You must ___ the Ender Dragon alone.","___ the hard problem instead of skipping it."],
+convenient:["The field is ___ because it's next to school.","A nearby village is ___ for trading.","A calculator is ___ but not allowed on this test."],
+courageous:["The ___ keeper dove at the striker's feet.","The ___ player entered the Nether with iron armor.","The ___ student tried the hardest problem first."],
+crafty:["The ___ winger faked left and went right.","The ___ player hid a trap behind the chest.","The ___ problem hides the real question in the last line."],
+cramped:["The ___ locker room barely fit the team.","The ___ mine tunnel was one block wide.","The ___ margin left no room for working."],
+dawdle:["Don't ___ on the way to practice.","Don't ___ outside at night.","Don't ___ on easy questions."],
+decipher:["The team had to ___ the coach's messy diagram.","We had to ___ the enchanting table's symbols.","You must ___ what the word problem is asking."],
+dependable:["A ___ defender is worth more than a flashy one.","A ___ wheat farm never runs out.","A ___ method always gives the same answer."],
+detour:["The bus took a ___ around the closed road.","Take a ___ around the ravine.","Taking a ___ through fractions solved the problem."],
+dismay:["To the team's ___, the match was rained out.","To my ___, the chest was empty.","To her ___, she got the last question wrong."],
+drowsy:["The ___ players yawned through warm-up.","The ___ player forgot to light the base.","The ___ student added instead of subtracting."],
+elegant:["Her ___ first touch made it look easy.","The ___ bridge used only quartz and glass.","An ___ proof uses just three lines."],
+enthusiasm:["The rookie's ___ was contagious.","His ___ for building spread to the whole class.","Her ___ for puzzles made math club fun."],
+envious:["He was ___ of his friend's new cleats.","I was ___ of her diamond armor.","He was ___ of the kid who finished first."],
+exert:["Players must ___ themselves for ninety minutes.","You must ___ effort to mine obsidian.","___ a little more effort on the hard problems."],
+famished:["After two matches, the team was ___.","Running everywhere leaves you ___.","The ___ students rushed to lunch after the test."],
+flourish:["Young players ___ when they're allowed to fail.","Crops ___ next to water.","Students ___ when mistakes are okay."],
+forbid:["The coach chose to ___ phones at meetings.","The server rules ___ TNT.","The rules ___ calculators on this test."],
+fortunate:["We were ___ the rain stopped before kickoff.","I was ___ to find diamonds on day one.","She was ___ that the test covered what she studied."],
+gratitude:["The team showed ___ to the parents who drove.","Show ___ to friends who share food.","She showed ___ to the tutor who explained fractions."],
+hazardous:["Playing on the icy pitch was ___.","Mining near lava is ___.","Skipping the check is ___ on a test."],
+hoard:["He likes to ___ old match tickets.","Don't ___ cobblestone; you'll never use it all.","Don't ___ your questions; ask them now."],
+imitate:["Young players ___ their favorite striker's celebration.","New builders ___ famous castles.","___ the worked example, then try your own."],
+impulsive:["The ___ tackle earned a yellow card.","The ___ jump into the ravine broke my legs.","The ___ answer skipped the check."],
+inevitable:["With ten men, a goal against felt ___.","Without torches, a zombie attack is ___.","A mistake is ___ if you rush."],
+initiative:["She took the ___ to organize extra practice.","He took the ___ to build the village walls.","She took the ___ to make a times-table chart."],
+insist:["The coach continued to ___ on a proper warm-up.","The admin will ___ on no griefing.","The teacher will ___ on showing work."],
+interpret:["Players must ___ the referee's signals.","You must ___ the map to find the stronghold.","First ___ the question, then solve it."],
+linger:["Fans chose to ___ after the match for autographs.","Don't ___ in the dark.","Don't ___ on one problem; move on and come back."],
+meddle:["Parents shouldn't ___ with the lineup.","Don't ___ with other players' redstone.","Don't ___ with your partner's work without asking."],
+mimic:["He likes to ___ the referee's whistle.","Parrots ___ the sounds of mobs.","___ the example's steps for the next problem."],
+miserable:["The ___ players trudged off after the loss.","The ___ night without shelter felt endless.","The ___ score pushed her to practice more."],
+moderate:["The ___ heat made the match bearable.","A ___ amount of food lasts the trip.","A ___ difficulty level keeps students learning."],
+negotiate:["The captains had to ___ who kicks off.","Factions ___ borders to avoid war.","You can ___ with a problem by trying a smaller version first."],
+numerous:["The striker missed ___ chances.","There are ___ ways to build a door.","There are ___ ways to solve this problem."],
+obstacle:["The tall defender was an ___ for every cross.","The ravine is an ___ between base and village.","Fractions were an ___ until she practiced."],
+persuade:["She managed to ___ her brother to join the team.","He tried to ___ friends to help build.","Nothing could ___ him to skip the check."],
+pursue:["The defender chose to ___ the winger down the line.","Don't ___ a creeper; let it come to you.","___ the pattern until you find the rule."],
+reassure:["The coach tried to ___ the keeper after the mistake.","Friends tried to ___ me after the raid.","The teacher tried to ___ the nervous class."],
+rummage:["He had to ___ through the bag for shin guards.","I had to ___ through chests for one iron ingot.","She had to ___ through notes for the formula."],
+sturdy:["The ___ goalposts survived the storm.","A ___ stone wall stops creepers.","A ___ method works even on hard problems."],
+tamper:["Nobody should ___ with the match ball.","Don't ___ with another player's chest.","Don't ___ with the data to make the answer fit."],
+unruly:["The ___ fans threw cups on the field.","The ___ players spammed TNT.","The ___ class couldn't finish the lesson."],
+vigorous:["A ___ warm-up gets the legs ready.","___ mining fills your inventory fast.","___ practice makes times tables automatic."],
+};
+
+const WORDS=MID.concat(MID2,MID3);
+
+const SENT=Object.assign({},IS1,IS2,IS3);const THEMES=[["soccer","⚽ Soccer"],["minecraft","⛏️ Minecraft"],["math","➗ Math"],["mix","🔀 Mix"]];
+function sentOf(i){const s=SENT[WORDS[i][0]];if(!s)return WORDS[i][5];const t=S.theme||"mix";const k=t==="soccer"?0:t==="minecraft"?1:t==="math"?2:Math.floor(Math.random()*3);return s[k]}const MIDN=WORDS.length;const lvlOf=i=>i<MIDN?"Middle":"Upper";
+// ---------- spaced repetition ----------
+// Leitner boxes with expanding intervals (Ebbinghaus review-before-forgetting):
+// box 0 unseen, 1 = review next day, 2 = 3 days, 3 = 7 days, 4 = 14 days, 5 = 30 days
+const INTERVALS=[0,1,3,7,14,30];
+const DAY=86400000;
+const LEVELS=[[0,"Rookie","🧢"],[250,"Academy","⚽"],[600,"Starter","👟"],[1200,"Playmaker","⭐"],[2200,"Captain","🅲"],[3600,"Golden Boot","🥇"],[5500,"Legend","🏆"]];
+const BADGES=[
+ ["first","First match","🥅","Finish your first training session"],
+ ["s7","7-day streak","🔥","Train 7 days in a row"],
+ ["s21","21-day streak","🌋","Train 21 days in a row"],
+ ["m50","50 in the net","🔒","Master 50 words"],
+ ["m150","150 in the net","🛡️","Master 150 words"],
+ ["mall","Full squad","🏟️","Master every word"],
+ ["perfect","Clean sheet","🧤","A session with zero mistakes (10+ questions)"],
+ ["speed15","Sniper","🎯","15+ correct in one Shootout"],
+ ["seen","Seen it all","👀","Introduce every word"],
+];
+const KEY="wordpitch-v1";
+const todayKey=d=>{d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const fresh=()=>({v:1,name:"",exam:"2027-01-09",perDay:8,zh:true,xp:0,streak:0,best:0,last:"",freezeUsed:"",badges:[],w:{},hist:{},intro:[],updated:0,reportUrl:"",pending:false,theme:"mix"});
+let S=fresh();
+function load(){try{const j=localStorage.getItem(KEY);if(j)S=Object.assign(fresh(),JSON.parse(j))}catch(e){}}
+let dbRef=null,dbUserId=null,saveTimer=null;
+function save(){S.updated=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+  clearTimeout(saveTimer);saveTimer=setTimeout(cloudSave,1500);}
+async function cloudSave(){if(!dbRef)return;try{await dbRef.set(S);await summaryRef.set(summary())}catch(e){}}
+let summaryRef=null;
+function summary(){const m=masteredCount(),seen=S.intro.length;return{name:S.name,xp:S.xp,streak:S.streak,mastered:m,seen:seen,total:WORDS.length,due:dueList().length,last:S.last,updated:Date.now()}}
+function report(){if(!S.reportUrl)return;const t=todayKey();const h=S.hist[t]||{q:0,ok:0,nw:0,xp:0};
+  const weak=Object.keys(S.w).filter(i=>S.w[i].b<=1&&S.w[i].l>0).sort((a,b)=>S.w[b].l-S.w[a].l).slice(0,15).map(i=>WORDS[i][0]+"("+S.w[i].l+")").join(", ");
+  const body=JSON.stringify(Object.assign(summary(),{date:t,todayQ:h.q,todayAcc:h.q?Math.round(h.ok/h.q*100):"",todayNew:h.nw,todayXP:h.xp,weak,backup:btoa(unescape(encodeURIComponent(JSON.stringify(S))))}));
+  S.pending=true;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+  fetch(S.reportUrl,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body}).then(()=>{S.pending=false;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}).catch(()=>{})}
+async function cloudInit(){try{if(!window.claude||!claude.use)return;const [db,user]=await Promise.all([claude.use("db"),claude.use("user")]);if(!db||!user)return;const id=await user.id();if(!id)return;dbUserId=id;
+  dbRef=db.doc("data/users/"+id+"/isee");summaryRef=db.doc("summary/"+id);
+  const snap=await dbRef.get();if(snap.exists){const c=snap.data();if((c.updated||0)>(S.updated||0)){S=Object.assign(fresh(),c);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){};render()}}
+  else{await cloudSave()}
+  }catch(e){}}
+
+// ---------- state helpers ----------
+const ws=i=>S.w[i]||{b:0,d:0,l:0,c:0};
+function dueList(){const now=Date.now();return Object.keys(S.w).map(Number).filter(i=>S.w[i].b>0&&S.w[i].b<6&&S.w[i].d<=now)}
+function masteredCount(){return Object.values(S.w).filter(x=>x.b>=4).length}
+function unseen(){return WORDS.map((_,i)=>i).filter(i=>!S.w[i]||S.w[i].b===0)}
+function daysToExam(){const e=new Date(S.exam+"T00:00:00");return Math.ceil((e-new Date())/DAY)}
+function level(){let L=LEVELS[0],next=null;for(let i=0;i<LEVELS.length;i++){if(S.xp>=LEVELS[i][0]){L=LEVELS[i];next=LEVELS[i+1]||null}}return{L,next}}
+function addXP(n){S.xp+=n;const p=document.createElement("div");p.className="xp-pop";p.textContent="+"+n+" XP";document.body.appendChild(p);setTimeout(()=>p.remove(),1000);checkBadges();updateBoard()}
+function grade(i,ok){const x=ws(i);if(ok){x.b=Math.min(5,x.b+1);x.c++}else{x.b=1;x.l++}x.d=Date.now()+INTERVALS[x.b]*DAY;S.w[i]=x}
+function touchStreak(){const t=todayKey();if(S.last===t)return;const y=todayKey(new Date(Date.now()-DAY));const y2=todayKey(new Date(Date.now()-2*DAY));
+  if(S.last===y)S.streak++;
+  else if(S.last===y2&&S.freezeUsed!==weekKey()){S.streak++;S.freezeUsed=weekKey()}// one free missed day per week
+  else S.streak=1;
+  S.last=t;S.best=Math.max(S.best,S.streak)}
+function weekKey(){const d=new Date();const o=new Date(d.getFullYear(),0,1);return d.getFullYear()+"w"+Math.floor(((d-o)/DAY+o.getDay())/7)}
+function logHist(k,n){const t=todayKey();S.hist[t]=S.hist[t]||{rev:0,nw:0,xp:0,ok:0,q:0};S.hist[t][k]+=n}
+function checkBadges(){const m=masteredCount();const add=id=>{if(!S.badges.includes(id)){S.badges.push(id);toast("🏅 Badge unlocked: "+BADGES.find(b=>b[0]===id)[1])}};
+  if(S.streak>=7)add("s7");if(S.streak>=21)add("s21");if(m>=50)add("m50");if(m>=150)add("m150");if(m>=WORDS.length)add("mall");if(S.intro.length>=WORDS.length)add("seen")}
+function toast(msg){const d=document.createElement("div");d.className="xp-pop";d.style.fontSize="22px";d.style.top="30%";d.textContent=msg;document.body.appendChild(d);setTimeout(()=>d.remove(),1100)}
+
+// ---------- quiz generation ----------
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function synQ(i){const w=WORDS[i];const correct=w[4][0];const pool=WORDS.filter((o,j)=>j!==i&&!o[4].some(s=>w[4].includes(s))&&o[4][0]!==correct);
+  const ds=shuffle(pool).slice(0,3).map(o=>o[4][0]);return{type:"syn",i,prompt:w[0],opts:shuffle([correct,...ds]),ans:correct}}
+function sentQ(i){const w=WORDS[i];const pool=WORDS.filter((o,j)=>j!==i&&o[1]===w[1]&&!o[4].some(s=>w[4].includes(s)));
+  const ds=shuffle(pool).slice(0,3).map(o=>o[0]);return{type:"sent",i,prompt:sentOf(i),opts:shuffle([w[0],...ds]),ans:w[0]}}
+function defQ(i){const w=WORDS[i];const pool=WORDS.filter((o,j)=>j!==i&&o[1]===w[1]&&!o[4].some(s=>w[4].includes(s)));
+  const ds=shuffle(pool).slice(0,3).map(o=>o[2]);return{type:"def",i,prompt:w[0],opts:shuffle([w[2],...ds]),ans:w[2]}}
+function formQ(i){const w=WORDS[i];const f=FORMS[w[0]];const pick=f[Math.floor(Math.random()*f.length)];const pool=WORDS.filter((o,j)=>j!==i&&!o[4].some(s=>w[4].includes(s)));
+  const ds=shuffle(pool).slice(0,3).map(o=>o[2]);return{type:"form",i,prompt:pick[0],opts:shuffle([pick[1],...ds]),ans:pick[1],base:w[0]}}
+function makeQ(i){const b=ws(i).b;if(b>=2&&FORMS[WORDS[i][0]]&&Math.random()<0.3)return formQ(i);if(b<=1)return Math.random()<.5?synQ(i):defQ(i);const r=Math.random();return r<.45?synQ(i):r<.85?sentQ(i):defQ(i)}
+
+// ---------- UI ----------
+const $=s=>document.querySelector(s);
+const main=$("#main");
+let tab="today";
+function updateBoard(){$("#sbStreak").textContent=S.streak;$("#sbXP").textContent=S.xp;$("#sbDue").textContent=dueList().length;const d=daysToExam();$("#sbDays").textContent=isNaN(d)?"—":Math.max(0,d)}
+function render(){updateBoard();document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===tab));
+  ({today:rToday,words:rWords,plan:rPlan,stats:rStats,settings:rSettings})[tab]();window.scrollTo(0,0)}
+document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function pace(){const left=unseen().length;const d=daysToExam();const introDays=Math.max(1,Math.round((d-14)*6/7));// finish new words 2 weeks before exam, 6 training days/week
+  return{left,d,rec:Math.min(15,Math.max(3,Math.ceil(left/introDays)))}}
+
+function rToday(){const due=dueList();const t=todayKey();const h=S.hist[t]||{rev:0,nw:0,xp:0};const newLeft=Math.max(0,S.perDay-h.nw);const un=unseen().length;const nNew=Math.min(newLeft,un);
+  const {L,next}=level();const p=next?Math.round((S.xp-L[0])/(next[0]-L[0])*100):100;const pc=pace();
+  const done=due.length===0&&nNew===0;
+  main.innerHTML=`
+  <div class="lvl"><div class="ring" style="--p:${p}%"><i>${L[2]}</i></div><div><h2>${esc(S.name||"Player")} · ${L[1]}</h2><div class="muted">${next?`${next[0]-S.xp} XP to ${next[1]}`:"Max level reached"}</div></div></div>
+  <div class="rink"><h1>${done?"Full time ✔":"Today’s match"}</h1>
+  <p class="muted">${done?"Reviews are done and new words are in. Come back tomorrow — or run a penalty shootout for bonus XP.":`<b>${due.length}</b> reviews due · <b>${nNew}</b> new words · about ${Math.ceil((due.length+nNew*2)*0.4)} min`}</p>
+  ${pc.rec>S.perDay&&un>0?`<div class="note">Pace check: ${pc.left} words still unseen and ${pc.d} days to the exam. Raising new words/day to <b>${pc.rec}</b> would finish all new words two weeks before the test. Change it in Setup if you want.</div>`:""}
+  <p class="muted" style="margin-top:12px;font-size:15px">Today’s pitch — pick where the sentences come from:</p><div class="chips">${THEMES.map(t=>`<button class="chip th ${(S.theme||"mix")===t[0]?"on":""}" data-th="${t[0]}">${t[1]}</button>`).join("")}</div>
+  <div class="row" style="margin-top:8px">
+    <button class="btn" id="startBtn" ${done?"disabled":""}>${due.length?"Start reviews + new words":"Start new words"}</button>
+    <button class="btn gold" id="shootBtn" ${S.intro.length<8?"disabled":""}>⚡ Penalty shootout (60 s bonus)</button>
+    ${done&&un>0?`<button class="btn ghost" id="extraBtn">Learn ${Math.min(5,un)} extra words</button>`:""}
+  </div>
+  ${S.intro.length<8?`<p class="kb">The penalty shootout unlocks after you’ve met 8 words.</p>`:""}
+  </div>
+  <div class="blueline"><h3>How this works</h3>
+  <p class="muted" style="font-size:15px">Every word moves up a box each time you get it right: <b>1 day → 3 → 7 → 14 → 30</b>. You see it again right before you’d forget it. Get it wrong and it drops back to tomorrow — no XP lost, ever. Train 6 days a week; one missed day per week won’t break your streak.</p></div>`;
+  document.querySelectorAll(".chip.th").forEach(c=>c.onclick=()=>{S.theme=c.dataset.th;save();rToday()});$("#startBtn").onclick=()=>session(due.slice(0,40),nNew);$("#shootBtn").onclick=shootout;const x=$("#extraBtn");if(x)x.onclick=()=>session([],Math.min(5,un))}
+
+// ---------- session ----------
+function session(dueIdx,nNew){const newIdx=unseen().slice(0,nNew);
+  const items=[];shuffle(dueIdx).forEach(i=>items.push({kind:"q",i}));
+  newIdx.forEach(i=>{items.push({kind:"learn",i})});
+  // after learning, quiz new words twice in the same session (immediate retrieval practice)
+  shuffle(newIdx).forEach(i=>items.push({kind:"q",i,isNew:true}));
+  shuffle(newIdx).forEach(i=>items.push({kind:"q",i,isNew:true,second:true}));
+  let k=0,ok=0,q=0,combo=0,wrongs=[];
+  const total=items.length;
+  const step=()=>{if(k>=total)return finish();const it=items[k];const pct=Math.round(k/total*100);
+    if(it.kind==="learn"){const w=WORDS[it.i];if(!S.intro.includes(it.i)){S.intro.push(it.i);S.w[it.i]={b:1,d:Date.now()+DAY,l:0,c:0};logHist("nw",1)}
+      main.innerHTML=`<div class="prog"><i style="width:${pct}%"></i></div><p class="muted">New word ${newIdx.indexOf(it.i)+1} of ${newIdx.length}</p>
+      <div class="wcard"><div><span class="word">${esc(w[0])}</span><span class="pos">${w[1]==="n"?"noun":w[1]==="v"?"verb":"adjective"}</span></div>
+      <p style="font-size:20px;margin-top:10px">${esc(w[2])}</p>${S.zh?`<p class="zh">${esc(w[3])}</p>`:""}
+      <p class="muted" style="margin-top:8px">Also: ${w[4].map(esc).join(", ")}${FORMS[w[0]]?` · Other forms: ${FORMS[w[0]].map(f=>esc(f[0])).join(", ")}`:""}</p>
+      <p class="sent">${esc(sentOf(it.i)).replace("___","<b>"+esc(w[0])+"</b>")}</p></div>
+      <p class="kb">Say it out loud once, then picture the sentence. That is the fastest way to make it stick.</p>
+      <button class="btn" style="margin-top:12px" id="nx">Got it</button>`;$("#nx").onclick=()=>{k++;addXP(5);step()};return}
+    const Q=makeQ(it.i);q++;const w=WORDS[it.i];const sen=Q.type==="sent"?Q.prompt:sentOf(it.i);
+    const head=Q.type==="form"?`<p class="muted">A different form of a word you know. What does it mean?</p><div class="word">${esc(Q.prompt)}</div>`:Q.type==="syn"?`<p class="muted">Which word is closest in meaning to</p><div class="word">${esc(Q.prompt)}</div>`:Q.type==="def"?`<p class="muted">What does this word mean?</p><div class="word">${esc(Q.prompt)}</div>`:`<p class="muted">Fill in the blank</p><p class="sent">${esc(Q.prompt).replace("___","<b>______</b>")}</p>`;
+    main.innerHTML=`<div class="prog"><i style="width:${pct}%"></i></div><p class="muted">${it.isNew?"New word check":"Review"} · ${k+1}/${total} ${combo>=3?`· 🔥 ${combo} combo`:""}</p>
+    <div class="wcard">${head}</div><div class="opts">${Q.opts.map((o,n)=>`<button class="opt" data-o="${esc(o)}"><span class="k">${"ABCD"[n]}</span><span>${esc(o)}</span></button>`).join("")}</div><div id="fb"></div>`;
+    document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const pick=b.dataset.o;const right=pick===Q.ans;document.querySelectorAll(".opt").forEach(x=>{x.disabled=true;if(x.dataset.o===Q.ans)x.classList.add("ok");else if(x===b&&!right)x.classList.add("bad")});
+      if(!it.second||!right){grade(it.i,right)}// second check of a new word only counts if wrong
+      if(!it.isNew)logHist("rev",1);logHist("q",1);
+      let gain;if(right){ok++;combo++;gain=10+(combo>=3?5:0)+(combo>=6?5:0);logHist("ok",1)}else{combo=0;gain=2;wrongs.push(it.i)}
+      addXP(gain);logHist("xp",gain);
+      $("#fb").innerHTML=`<div class="fb ${right?"":"bad"}"><b>${right?"Right.":"Not quite."}</b> ${Q.type==="form"?`<b>${esc(Q.prompt)}</b> = ${esc(Q.ans)} · from <b>${esc(w[0])}</b> = ${esc(w[2])}`:`<b>${esc(w[0])}</b> = ${esc(w[2])}`}${S.zh?` <span class="zh">(${esc(w[3])})</span>`:""}<br><span class="muted">${esc(sen).replace("___",w[0])}</span></div><button class="btn" style="margin-top:10px" id="nx">${right?"Next":"OK, next"}</button>`;
+      $("#nx").onclick=()=>{k++;step()};$("#nx").focus();save()});
+  };
+  const finish=()=>{touchStreak();if(!S.badges.includes("first"))S.badges.push("first");if(q>=10&&ok===q&&!S.badges.includes("perfect")){S.badges.push("perfect")}checkBadges();save();report();
+    const acc=q?Math.round(ok/q*100):100;
+    main.innerHTML=`<div class="rink"><h1>Full time</h1>
+    <div class="stat"><span>Questions</span><span class="v">${q}</span></div><div class="stat"><span>Accuracy</span><span class="v">${acc}%</span></div><div class="stat"><span>Streak</span><span class="v">🔥 ${S.streak}</span></div>
+    ${wrongs.length?`<div class="blueline"><h3>Back to box 1 (you’ll see these tomorrow)</h3>${[...new Set(wrongs)].map(i=>`<div class="wl"><b>${esc(WORDS[i][0])}</b><span class="muted">${esc(WORDS[i][4][0])}${S.zh?" · "+esc(WORDS[i][3]):""}</span></div>`).join("")}</div>`:`<p style="margin-top:14px">Clean sheet. 🧤</p>`}
+    <div class="row" style="margin-top:16px"><button class="btn" id="home">Back to Today</button>${S.intro.length>=8?`<button class="btn gold" id="sh">⚡ Penalty shootout</button>`:""}</div></div>`;
+    $("#home").onclick=()=>{tab="today";render()};const sb=$("#sh");if(sb)sb.onclick=shootout};
+  step()}
+
+// ---------- shootout (speed round) ----------
+function shootout(){const pool=shuffle(S.intro.slice());if(pool.length<8)return;let t=60,score=0,k=0,timer;
+  const tick=()=>{t--;const e=$("#tm");if(e)e.textContent=t;if(t<=0){clearInterval(timer);end()}};
+  const next=()=>{const i=pool[k%pool.length];k++;const Q=synQ(i);
+    main.innerHTML=`<div class="row" style="justify-content:space-between;align-items:center"><span class="timer" id="tm">${t}</span><span class="disp" style="font-size:28px">🥅 ${score}</span></div>
+    <div class="wcard" style="margin-top:8px"><p class="muted">Closest meaning</p><div class="word">${esc(Q.prompt)}</div></div>
+    <div class="opts">${Q.opts.map((o,n)=>`<button class="opt" data-o="${esc(o)}"><span class="k">${"ABCD"[n]}</span><span>${esc(o)}</span></button>`).join("")}</div>`;
+    document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(b.dataset.o===Q.ans){score++;b.classList.add("ok");setTimeout(next,150)}else{b.classList.add("bad");document.querySelectorAll(".opt").forEach(x=>{if(x.dataset.o===Q.ans)x.classList.add("ok")});setTimeout(next,700)}})};
+  const end=()=>{const gain=score*3;addXP(gain);logHist("xp",gain);if(score>=15&&!S.badges.includes("speed15")){S.badges.push("speed15")}save();report();
+    main.innerHTML=`<div class="rink"><h1>Shootout over</h1><div class="stat"><span>Goals</span><span class="v">${score}</span></div><div class="stat"><span>Bonus XP</span><span class="v">+${gain}</span></div><div class="row" style="margin-top:16px"><button class="btn" id="again">Play again</button><button class="btn ghost" id="home">Back to Today</button></div></div>`;
+    $("#again").onclick=shootout;$("#home").onclick=()=>{tab="today";render()}};
+  timer=setInterval(tick,1000);next()}
+
+// ---------- words ----------
+let wFilter="all",wSearch="",wLvl="all";
+function rWords(){const now=Date.now();const list=WORDS.map((w,i)=>({w,i,s:ws(i)})).filter(x=>{if(wSearch&&!(x.w[0].includes(wSearch)||x.w[3].includes(wSearch)))return false;if(wLvl==="M"&&x.i>=MIDN)return false;if(wLvl==="U"&&x.i<MIDN)return false;
+  if(wFilter==="due")return x.s.b>0&&x.s.d<=now;if(wFilter==="learning")return x.s.b>0&&x.s.b<4;if(wFilter==="mastered")return x.s.b>=4;if(wFilter==="new")return x.s.b===0;return true});
+  main.innerHTML=`<h1>Word list</h1><input id="srch" placeholder="Search English or 中文" value="${esc(wSearch)}">
+  <div class="chips">${[["all","All"],["due","Due"],["learning","Learning"],["mastered","Mastered"],["new","Not yet seen"]].map(f=>`<button class="chip ${wFilter===f[0]?"on":""}" data-f="${f[0]}">${f[1]}</button>`).join("")}</div>
+  <p class="muted">${list.length} words</p>
+  ${list.map(x=>`<button class="wl" data-i="${x.i}"><span><b>${esc(x.w[0])}</b> <span class="muted" style="font-size:14px">${esc(x.w[4][0])}</span></span><span class="pill ${x.s.b>0&&x.s.d<=now?"due":"b"+x.s.b}">${x.s.b===0?"new":x.s.b>=4?"mastered":x.s.d<=now?"due":"box "+x.s.b}</span></button>`).join("")}`;
+  $("#srch").oninput=e=>{wSearch=e.target.value.toLowerCase();rWords()};document.querySelectorAll(".chip:not(.lv)").forEach(c=>c.onclick=()=>{wFilter=c.dataset.f;rWords()});document.querySelectorAll(".chip.lv").forEach(c=>c.onclick=()=>{wLvl=c.dataset.l;rWords()});
+  document.querySelectorAll(".wl").forEach(b=>b.onclick=()=>showWord(+b.dataset.i))}
+function showWord(i){const w=WORDS[i],s=ws(i);$("#modal").classList.remove("hidden");$("#modal").innerHTML=`<div><div><span class="word">${esc(w[0])}</span><span class="pos">${w[1]}</span></div><p style="font-size:19px">${esc(w[2])}</p><p class="zh">${esc(w[3])}</p><p class="muted">Also: ${w[4].map(esc).join(", ")}${FORMS[w[0]]?` · Other forms: ${FORMS[w[0]].map(f=>esc(f[0])).join(", ")}`:""}</p><p class="sent">${esc(sentOf(i)).replace("___","<b>"+esc(w[0])+"</b>")}</p>
+  <p class="kb">${s.b===0?"Not introduced yet.":`Box ${s.b} · ${s.c} correct · ${s.l} misses · next review ${s.d<=Date.now()?"now":new Date(s.d).toLocaleDateString()}`}</p><button class="btn ghost" id="cl">Close</button></div>`;$("#cl").onclick=()=>$("#modal").classList.add("hidden")}
+
+// ---------- plan ----------
+function rPlan(){const d=daysToExam();const pc=pace();const total=WORDS.length;const exam=new Date(S.exam+"T00:00:00");
+  const fmt=x=>(x.getMonth()+1)+"/"+x.getDate();const start=new Date();const p1end=new Date(exam-28*DAY),p2end=new Date(exam-14*DAY),p3end=new Date(exam-3*DAY);
+  const phase=start>p3end?3:start>p2end?2:start>p1end?1:0;
+  main.innerHTML=`<h1>Game plan</h1><p class="muted">Exam: ${S.exam} · ${d} days away · ${pc.left} of ${total} words not yet introduced</p>
+  <div class="phase ${phase===0?"now":""}"><div class="w">Now → ${fmt(p1end)}</div><div><b>Build the squad.</b> ${WORDS.length} ISEE Middle Level words. ${pc.rec} new words a day, 6 days a week, plus every review that comes due. About 10–12 minutes. All ${total} words should be introduced by ${fmt(p1end)}.</div></div>
+  <div class="phase ${phase===1?"now":""}"><div class="w">${fmt(p1end)} → ${fmt(p2end)}</div><div><b>Lock them in.</b> Few or no new words. Reviews only — the 7- and 14-day boxes come due now, which is exactly when memories are weakest. One penalty shootout a day to build speed.</div></div>
+  <div class="phase ${phase===2?"now":""}"><div class="w">${fmt(p2end)} → ${fmt(p3end)}</div><div><b>Exam mode.</b> Reviews plus two penalty shootouts a day. Use the Words tab to re-read anything still in boxes 1–3. Aim for 90%+ accuracy in sessions.</div></div>
+  <div class="phase ${phase===3?"now":""}"><div class="w">Last 3 days</div><div><b>Taper.</b> One short review session a day, no new material. Sleep matters more than cramming now.</div></div>
+  <div class="blueline"><h3>Weekly rhythm</h3>
+  <p style="font-size:15px">Mon–Sat: one shift (reviews + new words). Sun: rest day, or a penalty shootout for fun — the streak allows one skipped day per week.</p>
+  <p style="font-size:15px" class="muted">Why it works: the app schedules each word at 1, 3, 7, 14 and 30 days — the points where you are just about to forget it. Reviewing right before forgetting is what turns short-term recall into long-term memory. Testing yourself (not re-reading) and mixing question types does the rest.</p></div>`}
+
+// ---------- stats ----------
+function rStats(){const counts=[0,0,0,0,0,0];WORDS.forEach((_,i)=>counts[ws(i).b]++);const max=Math.max(...counts,1);const m=masteredCount();
+  const days=[];for(let k=6;k>=0;k--){const dt=new Date(Date.now()-k*DAY);const key=todayKey(dt);days.push({key,h:S.hist[key]})}
+  main.innerHTML=`<h1>Stat sheet</h1>
+  <div class="stat"><span>Words mastered (box 4+)</span><span class="v">${m} / ${WORDS.length}</span></div>
+  <div class="stat"><span>Words introduced</span><span class="v">${S.intro.length}</span></div>
+  <div class="stat"><span>Best streak</span><span class="v">${S.best}</span></div>
+  <div class="stat"><span>Total XP</span><span class="v">${S.xp}</span></div>
+  <div class="blueline"><h3>Where your words are</h3>
+  <div class="boxes">${counts.map((c,b)=>`<div class="${b>=4?"m":""}" style="height:${Math.round(c/max*100)}%"><span>${c}</span></div>`).join("")}</div>
+  <div class="blab"><span>new</span><span>1 day</span><span>3 days</span><span>7 days</span><span>14 days</span><span>30 days</span></div></div>
+  <div class="blueline"><h3>Last 7 days</h3>${days.map(x=>`<div class="stat"><span>${x.key.slice(5)}</span><span>${x.h?`${x.h.q} questions · ${x.h.q?Math.round(x.h.ok/x.h.q*100):0}% · ${x.h.nw} new · +${x.h.xp} XP`:"<span class='muted'>—</span>"}</span></div>`).join("")}</div>
+  <div class="blueline"><h3>Badges</h3><div class="badges">${BADGES.map(b=>`<div class="badge ${S.badges.includes(b[0])?"got":""}"><div class="e">${b[2]}</div><b>${b[1]}</b><div class="muted">${b[3]}</div></div>`).join("")}</div></div>`}
+
+// ---------- settings ----------
+function rSettings(){const pc=pace();
+  main.innerHTML=`<h1>Setup</h1>
+  <label class="f">Player name</label><input id="nm" value="${esc(S.name)}">
+  <label class="f">Exam date</label><input id="ex" type="date" value="${S.exam}">
+  <label class="f">New words per day (recommended now: ${pc.rec})</label><input id="pd" type="number" min="3" max="15" value="${S.perDay}">
+  <div class="tog" style="margin-top:14px"><span>Show Chinese meaning</span><button class="sw ${S.zh?"on":""}" id="zh" aria-label="Toggle Chinese"></button></div>
+  <button class="btn" style="margin-top:16px" id="sv">Save setup</button>
+  <div class="note">Progress is saved on this device${dbRef?" and synced to your account":""}. Parents: the Stats tab is the report card.</div>
+  <div class="blueline"><h3>Parent report</h3><p class="muted" style="font-size:14px">Paste the Google Apps Script web-app URL here. After every session the app sends a one-line summary (and a backup) to that spreadsheet.</p><input id="ru" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(S.reportUrl||"")}"><div class="row" style="margin-top:8px"><button class="btn ghost sm" id="rt">Send a test report</button></div></div>
+  <div class="blueline"><h3>Backup</h3><p class="muted" style="font-size:14px">Copy this code to move progress to another device, or paste a code to restore.</p><div class="row"><button class="btn ghost sm" id="exp">Export progress</button><button class="btn ghost sm" id="imp">Import progress</button></div><textarea id="bk" style="width:100%;height:80px;margin-top:8px;font:13px monospace;border:2px solid var(--line);border-radius:8px;background:var(--ice2);color:var(--ink)" placeholder="Progress code appears here / paste a code here"></textarea></div>
+  <div class="rink"><button class="btn ghost" id="rs">Reset all progress</button></div>`;
+  $("#exp").onclick=()=>{$("#bk").value=btoa(unescape(encodeURIComponent(JSON.stringify(S))));$("#bk").select();try{navigator.clipboard.writeText($("#bk").value);toast("Copied")}catch(e){}};
+  $("#imp").onclick=()=>{try{const o=JSON.parse(decodeURIComponent(escape(atob($("#bk").value.trim()))));if(!o.w)throw 0;if(confirm("Replace current progress with this code?")){S=Object.assign(fresh(),o);save();toast("Imported");tab="today";render()}}catch(e){alert("That code is not valid.")}};
+  $("#rt").onclick=()=>{S.reportUrl=$("#ru").value.trim();save();if(!S.reportUrl){alert("Paste a URL first.");return}report();toast("Sent — check the sheet")};
+  $("#zh").onclick=()=>{S.zh=!S.zh;$("#zh").classList.toggle("on",S.zh)};
+  $("#sv").onclick=()=>{S.reportUrl=$("#ru").value.trim();S.name=$("#nm").value.trim();S.exam=$("#ex").value||S.exam;S.perDay=Math.max(3,Math.min(15,+$("#pd").value||8));save();toast("Saved");tab="today";render()};
+  $("#rs").onclick=()=>{if(confirm("Reset everything? This cannot be undone."))  {const nm=S.name,ex=S.exam;S=fresh();S.name=nm;S.exam=ex;save();render()}}}
+
+// ---------- boot ----------
+load();render();if(S.pending&&navigator.onLine)report();
+if(!S.name){$("#modal").classList.remove("hidden");$("#modal").innerHTML=`<div><h2>Welcome to Word Pitch</h2><p class="muted">ISEE Middle Level vocabulary training — ${WORDS.length} words, scheduled so you review each one right before you’d forget it.</p><label class="f">Your name</label><input id="n0" placeholder="e.g. Ian"><label class="f">Exam date</label><input id="e0" type="date" value="${S.exam}"><button class="btn" style="margin-top:14px" id="go">Kick off</button></div>`;
+  $("#go").onclick=()=>{S.name=$("#n0").value.trim()||"Player";S.exam=$("#e0").value||S.exam;save();$("#modal").classList.add("hidden");render()}}
+cloudInit();
+if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+</script>
+</body>
+</html>
