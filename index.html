@@ -111,6 +111,7 @@ label.f{display:block;margin:12px 0 4px;font-weight:600;font-size:15px}
 .tog{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
 .sw{width:48px;height:28px;border-radius:14px;background:var(--line);position:relative}.sw.on{background:var(--green)}
 .sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .15s}.sw.on::after{left:23px}
+.spk{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:var(--ice2);font-size:16px;vertical-align:middle;margin-left:8px;flex:none}.spk:active{background:var(--line)}.spk.big{width:42px;height:42px;font-size:20px}
 .note{font-size:14px;color:var(--ink2);border:1.5px dashed var(--line);border-radius:10px;padding:10px;margin-top:10px}
 </style>
 </head>
@@ -712,6 +713,15 @@ vigorous:["A ___ warm-up gets the legs ready.","___ mining fills your inventory 
 const WORDS=MID.concat(MID2,MID3);
 
 const SENT=Object.assign({},IS1,IS2,IS3);const THEMES=[["soccer","⚽ Soccer"],["minecraft","⛏️ Minecraft"],["math","➗ Math"],["mix","🔀 Mix"]];
+const AUDIO_BASE="audio/";let curAudio=null,voiceCache=null;
+function sentKey(i,t){const s=SENT[WORDS[i][0]];const k=s?s.indexOf(t):-1;return k>=0?WORDS[i][0]+"-"+k:null}
+function pickVoice(){if(voiceCache)return voiceCache;try{const vs=speechSynthesis.getVoices().filter(v=>/^en[-_]US/i.test(v.lang));const pref=["Ava","Samantha","Aria","Jenny","Zira","Google US English","Natural","Enhanced","Premium"];for(const p of pref){const v=vs.find(v=>v.name.includes(p));if(v){voiceCache=v;return v}}voiceCache=vs[0]||null;return voiceCache}catch(e){return null}}
+function speak(text,key,rate){if(!text)return;if(curAudio){curAudio.pause();curAudio=null}try{speechSynthesis.cancel()}catch(e){}
+  const fb=()=>{try{const u=new SpeechSynthesisUtterance(text);u.lang="en-US";u.rate=rate||0.92;const v=pickVoice();if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){}};
+  if(!key){fb();return}const a=new Audio(AUDIO_BASE+encodeURIComponent(key)+".mp3");a.onerror=fb;curAudio=a;a.play().catch(fb)}
+function spk(text,key,big){return `<button class="spk${big?" big":""}" data-say="${esc(text)}" data-key="${esc(key||"")}" aria-label="Play audio">🔊</button>`}
+document.addEventListener("click",e=>{const b=e.target.closest(".spk");if(b){e.preventDefault();speak(b.dataset.say,b.dataset.key||null)}});
+if("speechSynthesis" in window){speechSynthesis.onvoiceschanged=()=>{voiceCache=null}}
 function sentOf(i){const s=SENT[WORDS[i][0]];if(!s)return WORDS[i][5];const t=S.theme||"mix";const k=t==="soccer"?0:t==="minecraft"?1:t==="math"?2:Math.floor(Math.random()*3);return s[k]}const MIDN=WORDS.length;const lvlOf=i=>i<MIDN?"Middle":"Upper";
 // ---------- spaced repetition ----------
 // Leitner boxes with expanding intervals (Ebbinghaus review-before-forgetting):
@@ -732,7 +742,7 @@ const BADGES=[
 ];
 const KEY="wordpitch-v1";
 const todayKey=d=>{d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
-const fresh=()=>({v:1,name:"",exam:"2027-01-09",perDay:8,zh:true,xp:0,streak:0,best:0,last:"",freezeUsed:"",badges:[],w:{},hist:{},intro:[],updated:0,reportUrl:"",pending:false,theme:"mix"});
+const fresh=()=>({v:1,name:"",exam:"2027-01-09",perDay:8,zh:true,xp:0,streak:0,best:0,last:"",freezeUsed:"",badges:[],w:{},hist:{},intro:[],updated:0,reportUrl:"",pending:false,theme:"mix",autoSay:true});
 let S=fresh();
 function load(){try{const j=localStorage.getItem(KEY);if(j)S=Object.assign(fresh(),JSON.parse(j))}catch(e){}}
 let dbRef=null,dbUserId=null,saveTimer=null;
@@ -741,6 +751,7 @@ function save(){S.updated=Date.now();try{localStorage.setItem(KEY,JSON.stringify
 async function cloudSave(){if(!dbRef)return;try{await dbRef.set(S);await summaryRef.set(summary())}catch(e){}}
 let summaryRef=null;
 function summary(){const m=masteredCount(),seen=S.intro.length;return{name:S.name,xp:S.xp,streak:S.streak,mastered:m,seen:seen,total:WORDS.length,due:dueList().length,last:S.last,updated:Date.now()}}
+function audioKeys(){const ks=[];WORDS.forEach(w=>{ks.push(w[0]);const s=SENT[w[0]];if(s)s.forEach((_,k)=>ks.push(w[0]+"-"+k));const f=FORMS[w[0]];if(f)f.forEach(x=>ks.push(x[0]))});return ks}
 function report(){if(!S.reportUrl)return;const t=todayKey();const h=S.hist[t]||{q:0,ok:0,nw:0,xp:0};
   const weak=Object.keys(S.w).filter(i=>S.w[i].b<=1&&S.w[i].l>0).sort((a,b)=>S.w[b].l-S.w[a].l).slice(0,15).map(i=>WORDS[i][0]+"("+S.w[i].l+")").join(", ");
   const body=JSON.stringify(Object.assign(summary(),{date:t,todayQ:h.q,todayAcc:h.q?Math.round(h.ok/h.q*100):"",todayNew:h.nw,todayXP:h.xp,weak,backup:btoa(unescape(encodeURIComponent(JSON.stringify(S))))}));
@@ -828,15 +839,15 @@ function session(dueIdx,nNew){const newIdx=unseen().slice(0,nNew);
   const total=items.length;
   const step=()=>{if(k>=total)return finish();const it=items[k];const pct=Math.round(k/total*100);
     if(it.kind==="learn"){const w=WORDS[it.i];if(!S.intro.includes(it.i)){S.intro.push(it.i);S.w[it.i]={b:1,d:Date.now()+DAY,l:0,c:0};logHist("nw",1)}
-      main.innerHTML=`<div class="prog"><i style="width:${pct}%"></i></div><p class="muted">New word ${newIdx.indexOf(it.i)+1} of ${newIdx.length}</p>
-      <div class="wcard"><div><span class="word">${esc(w[0])}</span><span class="pos">${w[1]==="n"?"noun":w[1]==="v"?"verb":"adjective"}</span></div>
+      const ls=sentOf(it.i),lf=ls.replace("___",w[0]);main.innerHTML=`<div class="prog"><i style="width:${pct}%"></i></div><p class="muted">New word ${newIdx.indexOf(it.i)+1} of ${newIdx.length}</p>
+      <div class="wcard"><div><span class="word">${esc(w[0])}</span>${spk(w[0],w[0],true)}<span class="pos">${w[1]==="n"?"noun":w[1]==="v"?"verb":"adjective"}</span></div>
       <p style="font-size:20px;margin-top:10px">${esc(w[2])}</p>${S.zh?`<p class="zh">${esc(w[3])}</p>`:""}
       <p class="muted" style="margin-top:8px">Also: ${w[4].map(esc).join(", ")}${FORMS[w[0]]?` · Other forms: ${FORMS[w[0]].map(f=>esc(f[0])).join(", ")}`:""}</p>
-      <p class="sent">${esc(sentOf(it.i)).replace("___","<b>"+esc(w[0])+"</b>")}</p></div>
+      <p class="sent">${esc(ls).replace("___","<b>"+esc(w[0])+"</b>")}${spk(lf,sentKey(it.i,ls))}</p></div>
       <p class="kb">Say it out loud once, then picture the sentence. That is the fastest way to make it stick.</p>
-      <button class="btn" style="margin-top:12px" id="nx">Got it</button>`;$("#nx").onclick=()=>{k++;addXP(5);step()};return}
+      <button class="btn" style="margin-top:12px" id="nx">Got it</button>`;$("#nx").onclick=()=>{k++;addXP(5);step()};if(S.autoSay)setTimeout(()=>speak(w[0],w[0]),250);return}
     const Q=makeQ(it.i);q++;const w=WORDS[it.i];const sen=Q.type==="sent"?Q.prompt:sentOf(it.i);
-    const head=Q.type==="form"?`<p class="muted">A different form of a word you know. What does it mean?</p><div class="word">${esc(Q.prompt)}</div>`:Q.type==="syn"?`<p class="muted">Which word is closest in meaning to</p><div class="word">${esc(Q.prompt)}</div>`:Q.type==="def"?`<p class="muted">What does this word mean?</p><div class="word">${esc(Q.prompt)}</div>`:`<p class="muted">Fill in the blank</p><p class="sent">${esc(Q.prompt).replace("___","<b>______</b>")}</p>`;
+    const head=Q.type==="form"?`<p class="muted">A different form of a word you know. What does it mean?</p><div class="word">${esc(Q.prompt)}${spk(Q.prompt,Q.prompt,true)}</div>`:Q.type==="syn"?`<p class="muted">Which word is closest in meaning to</p><div class="word">${esc(Q.prompt)}${spk(Q.prompt,Q.prompt,true)}</div>`:Q.type==="def"?`<p class="muted">What does this word mean?</p><div class="word">${esc(Q.prompt)}${spk(Q.prompt,Q.prompt,true)}</div>`:`<p class="muted">Fill in the blank</p><p class="sent">${esc(Q.prompt).replace("___","<b>______</b>")}</p>`;
     main.innerHTML=`<div class="prog"><i style="width:${pct}%"></i></div><p class="muted">${it.isNew?"New word check":"Review"} · ${k+1}/${total} ${combo>=3?`· 🔥 ${combo} combo`:""}</p>
     <div class="wcard">${head}</div><div class="opts">${Q.opts.map((o,n)=>`<button class="opt" data-o="${esc(o)}"><span class="k">${"ABCD"[n]}</span><span>${esc(o)}</span></button>`).join("")}</div><div id="fb"></div>`;
     document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const pick=b.dataset.o;const right=pick===Q.ans;document.querySelectorAll(".opt").forEach(x=>{x.disabled=true;if(x.dataset.o===Q.ans)x.classList.add("ok");else if(x===b&&!right)x.classList.add("bad")});
@@ -844,7 +855,7 @@ function session(dueIdx,nNew){const newIdx=unseen().slice(0,nNew);
       if(!it.isNew)logHist("rev",1);logHist("q",1);
       let gain;if(right){ok++;combo++;gain=10+(combo>=3?5:0)+(combo>=6?5:0);logHist("ok",1)}else{combo=0;gain=2;wrongs.push(it.i)}
       addXP(gain);logHist("xp",gain);
-      $("#fb").innerHTML=`<div class="fb ${right?"":"bad"}"><b>${right?"Right.":"Not quite."}</b> ${Q.type==="form"?`<b>${esc(Q.prompt)}</b> = ${esc(Q.ans)} · from <b>${esc(w[0])}</b> = ${esc(w[2])}`:`<b>${esc(w[0])}</b> = ${esc(w[2])}`}${S.zh?` <span class="zh">(${esc(w[3])})</span>`:""}<br><span class="muted">${esc(sen).replace("___",w[0])}</span></div><button class="btn" style="margin-top:10px" id="nx">${right?"Next":"OK, next"}</button>`;
+      $("#fb").innerHTML=`<div class="fb ${right?"":"bad"}"><b>${right?"Right.":"Not quite."}</b> ${Q.type==="form"?`<b>${esc(Q.prompt)}</b> = ${esc(Q.ans)} · from <b>${esc(w[0])}</b> = ${esc(w[2])}`:`<b>${esc(w[0])}</b> = ${esc(w[2])}`}${S.zh?` <span class="zh">(${esc(w[3])})</span>`:""}${Q.type==="sent"?spk(w[0],w[0]):""}<br><span class="muted">${esc(sen).replace("___",w[0])}</span>${spk(sen.replace("___",w[0]),sentKey(it.i,sen))}</div><button class="btn" style="margin-top:10px" id="nx">${right?"Next":"OK, next"}</button>`;
       $("#nx").onclick=()=>{k++;step()};$("#nx").focus();save()});
   };
   const finish=()=>{touchStreak();if(!S.badges.includes("first"))S.badges.push("first");if(q>=10&&ok===q&&!S.badges.includes("perfect")){S.badges.push("perfect")}checkBadges();save();report();
@@ -879,7 +890,7 @@ function rWords(){const now=Date.now();const list=WORDS.map((w,i)=>({w,i,s:ws(i)
   ${list.map(x=>`<button class="wl" data-i="${x.i}"><span><b>${esc(x.w[0])}</b> <span class="muted" style="font-size:14px">${esc(x.w[4][0])}</span></span><span class="pill ${x.s.b>0&&x.s.d<=now?"due":"b"+x.s.b}">${x.s.b===0?"new":x.s.b>=4?"mastered":x.s.d<=now?"due":"box "+x.s.b}</span></button>`).join("")}`;
   $("#srch").oninput=e=>{wSearch=e.target.value.toLowerCase();rWords()};document.querySelectorAll(".chip:not(.lv)").forEach(c=>c.onclick=()=>{wFilter=c.dataset.f;rWords()});document.querySelectorAll(".chip.lv").forEach(c=>c.onclick=()=>{wLvl=c.dataset.l;rWords()});
   document.querySelectorAll(".wl").forEach(b=>b.onclick=()=>showWord(+b.dataset.i))}
-function showWord(i){const w=WORDS[i],s=ws(i);$("#modal").classList.remove("hidden");$("#modal").innerHTML=`<div><div><span class="word">${esc(w[0])}</span><span class="pos">${w[1]}</span></div><p style="font-size:19px">${esc(w[2])}</p><p class="zh">${esc(w[3])}</p><p class="muted">Also: ${w[4].map(esc).join(", ")}${FORMS[w[0]]?` · Other forms: ${FORMS[w[0]].map(f=>esc(f[0])).join(", ")}`:""}</p><p class="sent">${esc(sentOf(i)).replace("___","<b>"+esc(w[0])+"</b>")}</p>
+function showWord(i){const w=WORDS[i],s=ws(i);$("#modal").classList.remove("hidden");const ms=sentOf(i);$("#modal").innerHTML=`<div><div><span class="word">${esc(w[0])}</span>${spk(w[0],w[0],true)}<span class="pos">${w[1]}</span></div><p style="font-size:19px">${esc(w[2])}</p><p class="zh">${esc(w[3])}</p><p class="muted">Also: ${w[4].map(esc).join(", ")}${FORMS[w[0]]?` · Other forms: ${FORMS[w[0]].map(f=>esc(f[0])).join(", ")}`:""}</p><p class="sent">${esc(ms).replace("___","<b>"+esc(w[0])+"</b>")}${spk(ms.replace("___",w[0]),sentKey(i,ms))}</p>
   <p class="kb">${s.b===0?"Not introduced yet.":`Box ${s.b} · ${s.c} correct · ${s.l} misses · next review ${s.d<=Date.now()?"now":new Date(s.d).toLocaleDateString()}`}</p><button class="btn ghost" id="cl">Close</button></div>`;$("#cl").onclick=()=>$("#modal").classList.add("hidden")}
 
 // ---------- plan ----------
@@ -915,16 +926,19 @@ function rSettings(){const pc=pace();
   <label class="f">Player name</label><input id="nm" value="${esc(S.name)}">
   <label class="f">Exam date</label><input id="ex" type="date" value="${S.exam}">
   <label class="f">New words per day (recommended now: ${pc.rec})</label><input id="pd" type="number" min="3" max="15" value="${S.perDay}">
-  <div class="tog" style="margin-top:14px"><span>Show Chinese meaning</span><button class="sw ${S.zh?"on":""}" id="zh" aria-label="Toggle Chinese"></button></div>
+  <div class="tog" style="margin-top:14px"><span>Auto-play word audio on new-word cards</span><button class="sw ${S.autoSay?"on":""}" id="as" aria-label="Toggle auto-play"></button></div>
+  <div class="tog"><span>Show Chinese meaning</span><button class="sw ${S.zh?"on":""}" id="zh" aria-label="Toggle Chinese"></button></div>
   <button class="btn" style="margin-top:16px" id="sv">Save setup</button>
   <div class="note">Progress is saved on this device${dbRef?" and synced to your account":""}. Parents: the Stats tab is the report card.</div>
+  <div class="blueline"><h3>Voice</h3><p class="muted" style="font-size:14px">Tap 🔊 anywhere to hear a word or sentence. Natural voice clips play from the site’s audio pack; if a clip is missing, the device voice is used.</p><button class="btn ghost sm" id="dl">Download audio pack for offline</button></div>
   <div class="blueline"><h3>Parent report</h3><p class="muted" style="font-size:14px">Paste the Google Apps Script web-app URL here. After every session the app sends a one-line summary (and a backup) to that spreadsheet.</p><input id="ru" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(S.reportUrl||"")}"><div class="row" style="margin-top:8px"><button class="btn ghost sm" id="rt">Send a test report</button></div></div>
   <div class="blueline"><h3>Backup</h3><p class="muted" style="font-size:14px">Copy this code to move progress to another device, or paste a code to restore.</p><div class="row"><button class="btn ghost sm" id="exp">Export progress</button><button class="btn ghost sm" id="imp">Import progress</button></div><textarea id="bk" style="width:100%;height:80px;margin-top:8px;font:13px monospace;border:2px solid var(--line);border-radius:8px;background:var(--ice2);color:var(--ink)" placeholder="Progress code appears here / paste a code here"></textarea></div>
   <div class="rink"><button class="btn ghost" id="rs">Reset all progress</button></div>`;
   $("#exp").onclick=()=>{$("#bk").value=btoa(unescape(encodeURIComponent(JSON.stringify(S))));$("#bk").select();try{navigator.clipboard.writeText($("#bk").value);toast("Copied")}catch(e){}};
   $("#imp").onclick=()=>{try{const o=JSON.parse(decodeURIComponent(escape(atob($("#bk").value.trim()))));if(!o.w)throw 0;if(confirm("Replace current progress with this code?")){S=Object.assign(fresh(),o);save();toast("Imported");tab="today";render()}}catch(e){alert("That code is not valid.")}};
   $("#rt").onclick=()=>{S.reportUrl=$("#ru").value.trim();save();if(!S.reportUrl){alert("Paste a URL first.");return}report();toast("Sent — check the sheet")};
-  $("#zh").onclick=()=>{S.zh=!S.zh;$("#zh").classList.toggle("on",S.zh)};
+  $("#zh").onclick=()=>{S.zh=!S.zh;$("#zh").classList.toggle("on",S.zh)};$("#as").onclick=()=>{S.autoSay=!S.autoSay;$("#as").classList.toggle("on",S.autoSay);save()};
+  $("#dl").onclick=async()=>{const keys=audioKeys();const b=$("#dl");b.disabled=true;let ok=0,miss=0;for(let i=0;i<keys.length;i+=6){await Promise.all(keys.slice(i,i+6).map(k=>fetch(AUDIO_BASE+encodeURIComponent(k)+".mp3").then(r=>{r.ok?ok++:miss++}).catch(()=>miss++)));b.textContent=`Downloading… ${ok+miss}/${keys.length}`}b.textContent=miss>keys.length/2?"No audio pack found on this site":`Audio saved for offline (${ok} clips)`};
   $("#sv").onclick=()=>{S.reportUrl=$("#ru").value.trim();S.name=$("#nm").value.trim();S.exam=$("#ex").value||S.exam;S.perDay=Math.max(3,Math.min(15,+$("#pd").value||8));save();toast("Saved");tab="today";render()};
   $("#rs").onclick=()=>{if(confirm("Reset everything? This cannot be undone."))  {const nm=S.name,ex=S.exam;S=fresh();S.name=nm;S.exam=ex;save();render()}}}
 
